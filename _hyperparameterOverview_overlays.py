@@ -629,12 +629,12 @@ if __name__ == '__main__':
                'learning_rate_mode': 'Learning rate mode'}
                 # 'errorBalancingValue': 'Error balancing value'}
 
-    foldersToOverlay = ['show-nonRec_multi_beRNN_03_highDim_correctOnly_16',
-                        'show-nonRec_multi_beRNN_03_highDim_correctOnly_32',
-                        'show-nonRec_multi_beRNN_03_highDim_correctOnly_64',
-                        'show-nonRec_multi_beRNN_03_highDim_correctOnly_128',
-                        'show-nonRec_multi_beRNN_03_highDim_correctOnly_256',
-                        'show-nonRec_multi_beRNN_03_highDim_correctOnly_512']
+    foldersToOverlay = ['show-grid_multi_beRNN_03_highDim_16',
+                        'show-grid_multi_beRNN_03_highDim_32',
+                        'show-grid_multi_beRNN_03_highDim_64',
+                        'show-grid_multi_beRNN_03_highDim_128',
+                        'show-grid_multi_beRNN_03_highDim_256',
+                        'show-grid_multi_beRNN_03_highDim_512']
 
     paper_nomenclatur_dict = ['HC1', 'HC2', 'MDD', 'ASD', 'SCZ']
     participantList = ['beRNN_00', 'beRNN_01', 'beRNN_02', 'beRNN_03', 'beRNN_04', 'beRNN_05']
@@ -651,7 +651,7 @@ if __name__ == '__main__':
     models_over_wholeTimePeriod = False # info. Should be true if analysis is run over months 1, 3, 6, 9, 12
     lastMonth = '5'
 
-    visualizePerformanceOverTime = True # for paper plot - visulaizing performance of one model over defined period
+    visualizePerformanceOverTime = False # for paper plot - visulaizing performance of one model over defined period
 
     # .info initialize a dict and start a density loop *****************************************************************
     meta_dict = defaultdict(OrderedDict)
@@ -816,12 +816,14 @@ if __name__ == '__main__':
         # visualize_simulatedTopMarkerNetworks()
 
         # info. Compare variances and means between low- and high-performing models **********************************************
-        for comparison in ['clustering', 'modularity']:
+        for comparison in ['clustering', 'modularity', 'participation']:
 
             if comparison == 'clustering':
                 list_clust = [element for unterliste in meta_clustering_list for element in unterliste[:128]]
             elif comparison == 'modularity':
                 list_clust = [element for unterliste in meta_modularity_list for element in unterliste[:128]]
+            elif comparison == 'participation':
+                list_clust = [element for unterliste in meta_participation_coefficient_list for element in unterliste[:128]]
 
             list_perf = [element for unterliste in meta_perf_test_list for element in unterliste[:128]]
             perf = np.array(list_perf)

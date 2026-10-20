@@ -8,6 +8,7 @@ library(lmerTest)
 library(emmeans)
 library(dplyr)
 library(ggplot2)
+library(performance)
 
 # function to transform json file 
 process_json_robust <- function(filepath, value_name) {
@@ -21,7 +22,7 @@ process_json_robust <- function(filepath, value_name) {
     mutate(Values = map(Months, as.numeric)) %>% 
     select(-Months) %>%
     # safely unpack
-    unnest_longer(Values, indices_to = "Trial") %>%
+    unnest_longer(Values, indices_to = "Session") %>%
     rename(!!value_name := Values)
   
   return(df)
@@ -32,8 +33,8 @@ df_acc <- process_json_robust("W:/group_csp/analyses/oliver.frank/Data/participa
 df_comp <- process_json_robust("W:/group_csp/analyses/oliver.frank/Data/participants_dict_complexities.json", "Complexity")
 
 df_final <- df_rt %>%
-  left_join(df_acc, by = c("Participant", "Month", "Task", "Trial")) %>%
-  left_join(df_comp, by = c("Participant", "Month", "Task", "Trial"))
+  left_join(df_acc, by = c("Participant", "Month", "Task", "Session")) %>%
+  left_join(df_comp, by = c("Participant", "Month", "Task", "Session"))
 
 df_final <- df_final %>%
   mutate(Month = as.numeric(Month))
@@ -51,31 +52,62 @@ df_final <- df_final %>%
 # ======================================================================================
 # Calculate contrasts
 # ======================================================================================
-# create models with fixed and random effects 
-model_rt <- lmer(ReactionTime ~ Month + Complexity + Task + (1|Participant), data = df_final)
-model_acc <- lmer(Accuracy ~ Month + Complexity + Task + (1|Participant), data = df_final)
-
+# REACTION TIME ################################################################
+model_rt <- lmer(log(ReactionTime) ~ Month + Complexity + Task + (1|Participant), data = df_final) 
 # check results RT
 summary(model_rt)
 anova(model_rt)
 ranova(model_rt)
+r2(model_rt)
+r2_nakagawa(model_rt)
+# check performance
+performance::r2(model_rt)
+performance::icc(model_rt)
+# Post-hoc-Tests (Tukey)
+posthoc_rt <- emmeans(model_rt, pairwise ~ Month, pbkrtest.limit = 5140)
+# show contrast results
+print(posthoc_rt$contrasts)
+# Potentially add confidence intervall to express imprecise estimation of random effects due to small cohort
+confint(model_rt, parm = "sd_(Intercept)|Participant", method = "profile")
 
+
+# ACCURACY #####################################################################
+# Needs gLMM because of relative outcome variable accuracy
+df_final <- df_final %>%
+  mutate(
+    n_trials  = 40,
+    n_correct = round(Accuracy / 100 * n_trials),
+    n_wrong   = n_trials - n_correct,
+    dev       = Accuracy / 100 * n_trials - n_correct   # deviation in trials
+  )
+model_acc <- glmer(
+  cbind(n_correct, n_wrong) ~ Month + Complexity + Task + (1 | Participant),
+  data    = df_final,
+  family  = binomial(link = "logit"),
+  control = glmerControl(optimizer = "bobyqa")
+)
 # check results ACC
 summary(model_acc)
 anova(model_acc)
-ranova(model_acc)
-
+# Fixed effect
+m_glmm <- glmer(cbind(n_correct, n_wrong) ~ Month + Complexity + Task + (1 | Participant),
+                data = df_final, family = binomial,
+                control = glmerControl(optimizer = "bobyqa"))
+m_glm  <- glm(cbind(n_correct, n_wrong) ~ Month + Complexity + Task,
+              data = df_final, family = binomial)
+lrt <- as.numeric(2 * (logLik(m_glmm) - logLik(m_glm)))
+c(LRT = lrt, p = 0.5 * pchisq(lrt, df = 1, lower.tail = FALSE))
+r2(model_acc)
+r2_nakagawa(model_acc)
 # check performance
-performance::r2(model_rt)
 performance::r2(model_acc)
-
+performance::icc(model_acc)
 # Post-hoc-Tests (Tukey)
-posthoc_rt <- emmeans(model_rt, pairwise ~ Month, pbkrtest.limit = 5140)
 posthoc_acc <- emmeans(model_acc, pairwise ~ Month, pbkrtest.limit = 5140)
-
 # show contrast results
-print(posthoc_rt$contrasts)
 print(posthoc_acc$contrasts)
+# Potentially add confidence intervall to express imprecise estimation of random effects due to small cohort
+confint(model_acc, parm = "sd_(Intercept)|Participant", method = "profile")
 
 
 # ======================================================================================
@@ -318,4 +350,10 @@ plot_acc_facet <- ggplot(df_counts_acc, aes(x = Month, y = count, fill = Partici
 print(plot_rt_facet)
 print(plot_acc_facet)
 
+
+df_summary <- df_counts_acc %>%
+  group_by(Participant) %>%
+  summarise(total_count = sum(count, na.rm = TRUE), .groups = "drop")
+
+print(df_summary)
 

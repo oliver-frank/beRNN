@@ -1,74 +1,56 @@
-# ======================================================================================
-# Linear Mixed Model to compare error distributions between subjects within tasks
-# ======================================================================================
 library(dplyr)
-library(nnet)
-library(brms)
-library(car)
+library(tidyr)
+library(glmmTMB)
+library(jsonlite)
 
-# Read raw data (keeping counts intact)
 data_path <- "C:\\Users\\oliver.frank\\Desktop\\PyProjects\\Data\\all_tasks_flat_counts.csv"
-all_data <- read.csv(data_path, stringsAsFactors = FALSE)
+json_path <- "W:\\group_csp\\analyses\\oliver.frank\\Data\\participants_dict_reactionTime.json"  
 
-# Ensure subject and category are factors
-all_data$subject <- as.factor(all_data$subject)
+all_data <- read.csv(data_path, stringsAsFactors = FALSE)
+all_data$subject        <- as.factor(all_data$subject)
 all_data$error_category <- as.factor(all_data$error_category)
 
-unique_tasks <- unique(all_data$task)
+# --- n_trials per subject x task (summed over all months) ----------------------------
+j <- fromJSON(json_path, simplifyVector = FALSE)
+trials <- bind_rows(lapply(names(j), function(s)
+  bind_rows(lapply(j[[s]], function(m)
+    data.frame(subject = s, task = names(m), n = lengths(m)))))) %>%
+  group_by(subject, task) %>%
+  summarise(n_trials = sum(n), .groups = "drop")
 
-for (current_task in unique_tasks) {
+for (current_task in unique(all_data$task)) {
   cat("\n========================================================\n")
   cat("ANALYSIS FOR TASK:", current_task, "\n")
   cat("========================================================\n")
   
-  # Filter data for current task
-  task_data <- all_data %>% filter(task == current_task)
+  task_data <- all_data %>%
+    filter(task == current_task) %>%
+    group_by(error_category) %>% filter(sum(count) > 0) %>% ungroup() %>%
+    complete(subject, error_category, fill = list(count = 0)) %>%
+    mutate(task = current_task) %>%
+    left_join(trials, by = c("subject", "task")) %>%               # exposure, also for filled-in rows
+    filter(!is.na(n_trials), n_trials > 0) %>%                     # log(0) / NA would break the offset
+    group_by(subject) %>% filter(sum(count) > 0) %>% ungroup() %>%
+    droplevels()
   
-  # Exclude categories with absolute zero counts across all subjects
-  task_data <- task_data %>%
-    group_by(error_category) %>%
-    filter(sum(count) > 0) %>%
-    ungroup()
-  
-  # To feed an aggregated table into a multinomial model, 
-  # we reconstruct it into a subject-by-category matrix
-  wide_data <- task_data %>%
-    tidyr::pivot_wider(id_cols = subject, names_from = error_category, values_from = count, values_fill = 0)
-  
-  # Create a matrix of counts for the dependent variable
-  error_matrix <- as.matrix(wide_data[, -1])
-  
-  # ----------------------------------------------------
-  # PATH A: FIXED-EFFECTS MULTINOMIAL 
-  # ----------------------------------------------------
-  cat("\n--- Running Fixed-Effects Multinomial Regression ---\n")
-  
-  model_fixed <- tryCatch({
-    multinom(error_matrix ~ subject, data = wide_data, trace = FALSE)
-  }, error = function(e) {
-    cat("Warning: Model fitting failed for this task. Check for extreme data sparsity.\n")
-    return(NULL)
-  })
-  
-  if (!is.null(model_fixed)) {
-    # Type II Anova provides the definitive Chi-Square test for the "subject" effect
-    cat("\nANOVA Results (Does error distribution differ across subjects?):\n")
-    print(Anova(model_fixed, type = "II"))
+  if (nlevels(task_data$error_category) < 2) {
+    cat("Fewer than 2 error categories, skipping.\n")
+    next
   }
   
-  # ----------------------------------------------------
-  # PATH B: BAYESIAN MIXED-EFFECTS MULTINOMIAL 
-  # ----------------------------------------------------
-  # cat("\n--- Running Bayesian Mixed-Effects Multinomial ---\n")
-  # # Note: brms requires a long format where counts are treated as weights
-  # model_mixed <- brm(
-  #   error_category | weights(count) ~ 1 + (1 | subject),
-  #   data = task_data,
-  #   family = categorical(link = "logit"),
-  #   chains = 2, cores = 2, iter = 2000, refresh = 0
-  # )
-  # print(summary(model_mixed))
-  
+  tryCatch({
+    # nbinom takes care of overdispersion in m_0 by very different error_category counts 
+    # (random interaction effect in m_1 takes care of that)
+    m_0 <- glmmTMB(count ~ error_category + offset(log(n_trials)),
+                   family = nbinom2, data = task_data)
+    
+    m_1 <- glmmTMB(count ~ error_category + (1 | subject) + offset(log(n_trials)),
+                   family = nbinom2, data = task_data)
+    
+    res <- anova(m_0, m_1)
+    print(res)
+    cat("Boundary-corrected p-value:", res$`Pr(>Chisq)`[2] / 2, "\n")
+    print(VarCorr(m_1))
+  }, error = function(e) cat("Model failed:", conditionMessage(e), "\n"))
 }
-
 
