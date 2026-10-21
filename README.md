@@ -9,7 +9,7 @@
 6. Compare the internal representational metrics to brain embedded graphs (fMRI based)
 
 ## Hierarchy of actions
-1. preprocessing & dataAugmentation.py for data preperation
+1. preprocessing.py & dataAugmentation.py for data preperation
 2. training.py & hyperparameterTuning.py for training models
 3. hyperparameterOverview.py & hyperparameterOverview_overlays.py for performance and topological marker visualization
 4. singleNetworkAnalysis.py & multipleNetworkAnalysis.py - analyzing models hidden structure and task representation + saving representational network metrics
