@@ -10,7 +10,7 @@ import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 
-import tools
+import _tools
 # from _analysis import variance
 from _analysis import clustering
 from _singleNetworkAnalysis import define_data_folder

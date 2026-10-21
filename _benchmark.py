@@ -4,9 +4,9 @@ import os
 import six
 import numpy as np
 
-import tools
+import _tools
 from _training import get_default_hp
-from tools import rules_dict
+from _tools import rules_dict
 
 '''
 - Creates benchmark dataset from Yang et al. (2019)

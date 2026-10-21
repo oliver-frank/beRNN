@@ -9,7 +9,7 @@ import pandas as pd
 import os
 
 from _training import apply_density_threshold
-from tools import load_hp, load_pickle
+from _tools import load_hp, load_pickle
 
 '''
 - Compares functional correlation matrices on RNN/RNN or Brain/Brain or RNN/Brain

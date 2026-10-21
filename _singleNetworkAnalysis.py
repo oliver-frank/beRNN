@@ -26,9 +26,9 @@ plt.ioff() # prevents windows to pop up when figs and plots are created
 
 from _analysis import clustering  # , variance
 from _training import apply_density_threshold
-from network import Model
-import tools
-from tools import rule_name, load_pickle
+from _network import Model
+import _tools
+from _tools import rule_name, load_pickle
 
 # attention: script is outdated for evaluating task representations
 #  use _multipleNetworkAnalysis.py or _hyperparameterOverview.py (for preprocessing) instead

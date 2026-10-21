@@ -12,7 +12,7 @@ import argparse
 import json
 
 import _training
-import tools
+import _tools
 
 '''
 - Random grid search of different hyperparameter sets 

@@ -21,7 +21,7 @@ from networkx.algorithms.community import greedy_modularity_communities, modular
 
 from _training import apply_density_threshold
 from _analysis import clustering
-from tools import load_hp, load_pickle, participation_coefficient
+from _tools import load_hp, load_pickle, participation_coefficient
 
 '''
 - Compares brain/beRNN multiple models by correlation and/or RDA 

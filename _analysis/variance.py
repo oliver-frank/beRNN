@@ -20,8 +20,8 @@ import errno
 
 # from task import *
 from _benchmark import generate_trials
-from network import Model
-import tools
+from _network import Model
+import _tools
 
 save = True
 

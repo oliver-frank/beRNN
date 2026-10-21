@@ -27,9 +27,9 @@ import networkx as nx
 from networkx.algorithms.community import greedy_modularity_communities, modularity
 
 from _analysis import variance
-from network import Model, get_perf, get_perf_lowDIM
+from _network import Model, get_perf, get_perf_lowDIM
 from _benchmark import generate_trials
-import tools
+import _tools
 
 '''
 Roles:

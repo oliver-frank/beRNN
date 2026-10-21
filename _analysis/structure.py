@@ -8,8 +8,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 
-import tools
-from network import Model
+import _tools
+from _network import Model
 
 '''
 - Analyzes structural connectivity in ANNs

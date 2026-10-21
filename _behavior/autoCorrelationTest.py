@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import pearsonr, spearmanr, rankdata
 
-import tools
+import _tools
 
 '''
 - Create autocorrelation plot for collected data of defined participant and month

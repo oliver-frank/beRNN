@@ -14,9 +14,9 @@ tf.disable_v2_behavior()
 # attention. csp_frank_oliver_3 version ++++++++++++++++++++++++++++++++++++++++++++++
 
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-from network import Model, get_perf
-from tools import split_files
-import tools
+from _network import Model, get_perf
+from _tools import split_files
+import _tools
 
 import numpy as np
 import pandas as pd
