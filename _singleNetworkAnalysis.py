@@ -157,9 +157,9 @@ def define_data_folder(split_parts):
 ########################################################################################################################
 def plot_performanceprogress_test_BeRNN(model_dir, figurePath_overview, model, figurePath, rule_plot=None):
     # Plot Evaluation Progress
-    log = tools.load_log(model_dir)
-    # log = tools.load_log(currentModelDirectory)
-    hp = tools.load_hp(model_dir)
+    log = _tools.load_log(model_dir)
+    # log = _tools.load_log(currentModelDirectory)
+    hp = _tools.load_hp(model_dir)
 
     # co: change to [::2] if you want to have only every second validation value
     trials = log['trials']
@@ -213,8 +213,8 @@ def plot_performanceprogress_test_BeRNN(model_dir, figurePath_overview, model, f
 
 def plot_performanceprogress_train_BeRNN(model_dir, figurePath_overview, model, figurePath, rule_plot=None):
     # Plot Training Progress
-    log = tools.load_log(model_dir)
-    hp = tools.load_hp(model_dir)
+    log = _tools.load_log(model_dir)
+    hp = _tools.load_hp(model_dir)
 
     # co: change to [::2] if you want to have only every second validation value
     trials = log['trials']  # info: There is an entry every 40 trials for each task
@@ -281,9 +281,9 @@ def plot_performanceprogress_train_BeRNN(model_dir, figurePath_overview, model, 
 
 def plot_cost_test_BeRNN(model_dir, figurePath_overview, model, figurePath, rule_plot=None):
     # Plot Evaluation Progress
-    log = tools.load_log(model_dir)
-    # log = tools.load_log(currentModelDirectory)
-    hp = tools.load_hp(model_dir)
+    log = _tools.load_log(model_dir)
+    # log = _tools.load_log(currentModelDirectory)
+    hp = _tools.load_hp(model_dir)
 
     # co: change to [::2] if you want to have only every second validation value
     trials = log['trials']
@@ -351,8 +351,8 @@ def plot_cost_test_BeRNN(model_dir, figurePath_overview, model, figurePath, rule
 
 def plot_cost_train_BeRNN(model_dir, figurePath_overview, model, figurePath, rule_plot=None):
     # Plot Training Progress
-    log = tools.load_log(model_dir)
-    hp = tools.load_hp(model_dir)
+    log = _tools.load_log(model_dir)
+    hp = _tools.load_hp(model_dir)
 
     # co: change to [::2] if you want to have only every second validation value
     trials = log['trials']  # info: There is an entry every 40 trials for each task
@@ -497,7 +497,7 @@ def compute_functionalCorrelation(model_dir, threshold, monthsConsidered, mode, 
             communities_sparse = greedy_modularity_communities(G_sparse)
             mod_value_sparse = modularity(G_sparse, communities_sparse)
             # participation
-            pc_dict = tools.participation_coefficient(G_sparse, communities_sparse)
+            pc_dict = _tools.participation_coefficient(G_sparse, communities_sparse)
             avg_pc = np.mean(list(pc_dict.values()))
 
         except Exception as e:
@@ -690,12 +690,12 @@ class TaskSetAnalysis(object):
 
             for rule in rules:
                 month = hp['monthsConsidered'][-1]
-                train_data, test_data = tools.createSplittedDatasets(hp, preprocessedData_path, month)
+                train_data, test_data = _tools.createSplittedDatasets(hp, preprocessedData_path, month)
 
-                x, y, y_loc, response = tools.load_trials(hp['rng'], rule, 'test', hp['batch_size'], test_data,
+                x, y, y_loc, response = _tools.load_trials(hp['rng'], rule, 'test', hp['batch_size'], test_data,
                                                           False)  # y_loc is participantResponse_perfEvalForm
-                c_mask = tools.create_cMask(y, response, hp, 'test')
-                feed_dict = tools.gen_feed_dict(model, x, y, c_mask, hp)
+                c_mask = _tools.create_cMask(y, response, hp, 'test')
+                feed_dict = _tools.gen_feed_dict(model, x, y, c_mask, hp)
 
                 h = sess.run(model.h, feed_dict=feed_dict)  # info: Trainables are actualized - train_step should represent the step in _training.py and the global_step in network.py
 
@@ -711,7 +711,7 @@ class TaskSetAnalysis(object):
                 # Extract epoch of interest - most often response epoch
                 h_stimavg_byrule[rule] = h_stimavg[t_start:, :]
 
-                fixation_steps, response_steps = tools.getEpochSteps(y)
+                fixation_steps, response_steps = _tools.getEpochSteps(y)
 
                 # Take epoch
                 e_time_start = fixation_steps
@@ -854,7 +854,7 @@ class TaskSetAnalysis(object):
                 ytext = np.min(val[:, dim1])
                 va = 'top'
 
-            texts.append(ax.text(xtext * 1.1, ytext * 1.1, tools.rule_name[rule],
+            texts.append(ax.text(xtext * 1.1, ytext * 1.1, _tools.rule_name[rule],
                                  fontsize=6, color=color, alpha=0.6,
                                  horizontalalignment='center', verticalalignment=va))
 
@@ -962,9 +962,9 @@ def plot_taskVariance_and_lesioning(directory, mode, sort_variable, rdm_metric, 
         participant = [i for i in best_model_dir.split('\\') if 'beRNN_' in i][0]
         data_dir = os.path.join('C:\\Users\\oliver.frank\\Desktop\\PyProjects\\Data', participant, dataFolder)
 
-        hp = tools.load_hp(best_model_dir)
-        # tools.save_hp(hp_copy, best_model_dir) # pop out rng main reason for saving again
-        # hp = tools.load_hp(best_model_dir)
+        hp = _tools.load_hp(best_model_dir)
+        # _tools.save_hp(hp_copy, best_model_dir) # pop out rng main reason for saving again
+        # hp = _tools.load_hp(best_model_dir)
         layer = [1 if hp['multiLayer'] == False else 3][0]
 
         # info: Create TaskVariance Plot
@@ -1060,7 +1060,7 @@ def plot_group_rdm_mds(directory, mode, sort_variable, rdm_metric, numberOfModel
 
         data_dir = os.path.join('C:\\Users\\oliver.frank\\Desktop\\PyProjects\\Data', participant, dataFolder)
 
-        hp = tools.load_hp(best_model_dir)
+        hp = _tools.load_hp(best_model_dir)
         layer = [1 if hp['multiLayer'] == False else 3][0]
 
         # Create task variance matrix for current model in loop
@@ -1105,7 +1105,7 @@ def plot_group_rdm_mds(directory, mode, sort_variable, rdm_metric, numberOfModel
                                  -4] + f'_rdmArray_{knowledgeBase.rdm_metric}_{ruleset}.npy'), knowledgeBase.rdm)
 
         # info: Create RDM Heatmaps and 2D representations
-        label_list = [tools.rule_name[key] for key in knowledgeBase.keys]
+        label_list = [_tools.rule_name[key] for key in knowledgeBase.keys]
         fig_rdm = plot_rdm_heatmap(knowledgeBase.rdm, knowledgeBase.rdm_metric, task_labels=label_list)
         fig_rdm.savefig(os.path.join(representationalDissimilarity_dir,
                                      f'{model}_{sort_variable}_{mode}' + '_' + 'batch_' + best_model_dir.split("\\")[
@@ -1230,7 +1230,7 @@ if __name__ == "__main__":
                 # Loop through all models per months for each model
                 for model in model_list:
                     currentModelDirectory = os.path.join(model_dir, model)
-                    currentHP = tools.load_hp(currentModelDirectory)
+                    currentHP = _tools.load_hp(currentModelDirectory)
 
                     if currentHP.get('multiLayer'):
                         n_layers = len(currentHP['n_rnn_per_layer'])
@@ -1249,7 +1249,7 @@ if __name__ == "__main__":
                 for model_idx, (_model, model) in enumerate(_model_paths):
                     model_dir = os.path.join(_finalPath, _model)
                     currentModelDirectory = os.path.join(model_dir, model)
-                    currentHP = tools.load_hp(currentModelDirectory)
+                    currentHP = _tools.load_hp(currentModelDirectory)
 
                     dataFolder = define_data_folder(_model.split('_'))
 

@@ -392,7 +392,7 @@ if errorDistributions:
         list2 = ['responseOpposite', 'responseNone', 'responseOrtho']
         list3 = ['strengthDiff0', 'strengthDiff25', 'strengthDiff5', 'strengthDiff75']
         # Generating all combinations of categorical names
-        categorical_names = ['_'.join(combination) for combination in itertools.product(list1, list2, list3)]
+        categorical_names = ['_'.join(combination) for combination in iter_tools.product(list1, list2, list3)]
 
         ########################################################################################################################
         # DM -------------------------------------------------------------------------------------------------------------------
@@ -453,7 +453,7 @@ if errorDistributions:
         list3 = ['responseOpposite', 'responseNone', 'responseOrtho']
 
         # Generating all combinations of categorical names
-        categorical_names = ['_'.join(combination) for combination in itertools.product(list1, list2, list3)]
+        categorical_names = ['_'.join(combination) for combination in iter_tools.product(list1, list2, list3)]
 
         def get_errors_EF(Response, errors_dict, distract_dict, opposite_dict):
 
@@ -548,7 +548,7 @@ if errorDistributions:
                  'noResponse']
 
         # Generating all combinations of categorical names
-        categorical_names = ['_'.join(combination) for combination in itertools.product(list1)]
+        categorical_names = ['_'.join(combination) for combination in iter_tools.product(list1)]
 
         def get_errors_RP(Response, errors_dict, opened_meta_file):
 
@@ -699,8 +699,8 @@ if errorDistributions:
         list2 = ['3stim']
         list3 = ['diffColor_diffForm', 'simColor_diffForm', 'simColor_simForm']
 
-        categorical_names_WM_1 = ['_'.join(combination) for combination in itertools.product(list1, list2, list3)]
-        categorical_names_WM_2 = ['_'.join(combination) for combination in itertools.product(list1, list3)]
+        categorical_names_WM_1 = ['_'.join(combination) for combination in iter_tools.product(list1, list2, list3)]
+        categorical_names_WM_2 = ['_'.join(combination) for combination in iter_tools.product(list1, list3)]
 
         categorical_names_WM = categorical_names_WM_1 + categorical_names_WM_2
 
@@ -711,8 +711,8 @@ if errorDistributions:
         list3 = ['diffColor_diffForm', 'simColor_diffForm','diffColor_simForm', 'simColor_simForm']
         list4 = ['responseMatch', 'responseMismatch', 'responseNoResponse']
 
-        categorical_names_WM_Ctx_1 = ['_'.join(combination) for combination in itertools.product(list1, list2, list3, list4)]
-        categorical_names_WM_Ctx_2 = ['_'.join(combination) for combination in itertools.product(list1, list3, list4)]
+        categorical_names_WM_Ctx_1 = ['_'.join(combination) for combination in iter_tools.product(list1, list2, list3, list4)]
+        categorical_names_WM_Ctx_2 = ['_'.join(combination) for combination in iter_tools.product(list1, list3, list4)]
 
         categorical_names_WM_Ctx = categorical_names_WM_Ctx_2 + categorical_names_WM_Ctx_1
 
@@ -1013,7 +1013,7 @@ if contingencyTables:
         total_trials = 0
 
         # Prepare model restore
-        hp = tools.load_hp(model_dir)
+        hp = _tools.load_hp(model_dir)
 
         hp['rng'] = np.random.default_rng(42) # as for training
 
@@ -1033,7 +1033,7 @@ if contingencyTables:
 
             for i in range(0, 20): # Info: Each iteration represents one batch - after the spliting most often you only have 4 batches for one month
 
-                x, y, y_loc, base_name = tools.load_trials(hp['rng'], task, 'test', 40, file_quartett, True)
+                x, y, y_loc, base_name = _tools.load_trials(hp['rng'], task, 'test', 40, file_quartett, True)
                 ground_truth = np.load(os.path.join(base_name + 'Response.npy'), allow_pickle=True)
 
                 print(base_name)
@@ -1041,7 +1041,7 @@ if contingencyTables:
                 # Sort response data
                 c_mask = np.zeros((y.shape[0] * y.shape[1], y.shape[2]), dtype='float32')
                 # Generate model response for the current batch
-                feed_dict = tools.gen_feed_dict(model, x, y, c_mask, hp)
+                feed_dict = _tools.gen_feed_dict(model, x, y, c_mask, hp)
                 c_lsq, c_reg, modelResponse_machineForm = sess.run([model.cost_lsq, model.cost_reg, model.y_hat],feed_dict=feed_dict)
 
                 perf = get_perf(modelResponse_machineForm, y_loc)

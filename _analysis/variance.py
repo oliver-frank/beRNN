@@ -81,7 +81,7 @@ def _compute_variance_bymodel(data_dir, model_dir, layer, data_type, networkAnal
 
     # data_dir = 'C:\\Users\\oliver.frank\\Desktop\\BackUp\\Data\\BeRNN_' + model_dir.split('BeRNN_')[-1].split('_')[0] + '\\PreprocessedData_wResp_ALL'
     month = '_'.join(model_dir.split('_')[-2:]) # only current model's month considered
-    train_data, eval_data = tools.createSplittedDatasets(hp, data_dir, month)
+    train_data, eval_data = _tools.createSplittedDatasets(hp, data_dir, month)
 
     # Skip taskVariance creation if already exists
     save_name = 'var_' + mode + '_lay' + str(layer) + '_' + data_type + f'_{ruleset}'
@@ -108,10 +108,10 @@ def _compute_variance_bymodel(data_dir, model_dir, layer, data_type, networkAnal
 
                 # hp['benchmark'] = False # attention. comment out in the future
                 if hp['benchmark'] != True:
-                    x, y, y_loc, response = tools.load_trials(hp['rng'], task, mode, hp['batch_size'], eval_data,False)  # y_loc is participantResponse_perfEvalForm
+                    x, y, y_loc, response = _tools.load_trials(hp['rng'], task, mode, hp['batch_size'], eval_data,False)  # y_loc is participantResponse_perfEvalForm
 
-                    epochs = tools.find_epochs(x)
-                    c_mask = tools.create_cMask(y, response, hp, mode)
+                    epochs = _tools.find_epochs(x)
+                    c_mask = _tools.create_cMask(y, response, hp, mode)
 
                     # attention: hard-coded bug fix ************************************************************************
                     if c_mask is None:
@@ -129,7 +129,7 @@ def _compute_variance_bymodel(data_dir, model_dir, layer, data_type, networkAnal
 
                     x, y, y_loc, c_mask, epochs = trial.x, trial.y, trial.y_loc, trial.c_mask, trial.epochs
 
-                feed_dict = tools.gen_feed_dict(model, x, y, c_mask, hp)
+                feed_dict = _tools.gen_feed_dict(model, x, y, c_mask, hp)
 
                 if hp.get('multiLayer') == True: # info: Only concatenate layers for hpOverview & taskRepresentation
                     h = sess.run(model.h_all_layers, feed_dict=feed_dict)
@@ -285,7 +285,7 @@ def compute_variance(data_dir, model_dir, layer, mode, monthsConsidered, data_ty
         rules: list of rules to compute variance, list of strings
         random_rotation: boolean. If True, rotate the neural activity.
     """
-    dirs = tools.valid_model_dirs(model_dir)
+    dirs = _tools.valid_model_dirs(model_dir)
     for d in dirs:
         fname, fname2, fname3, fname4 = _compute_variance(data_dir, d, layer, mode, monthsConsidered, data_type, networkAnalysis, rules, random_rotation, **kwargs)
         return fname, fname2, fname3, fname4

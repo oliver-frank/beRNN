@@ -189,7 +189,7 @@ for month in months:
     test_perf_dict = {}
     model = os.path.join(model_dir, month)
 
-    log = tools.load_log(model)
+    log = _tools.load_log(model)
 
     # info: perf_train already has form of 26 data points (one for each evaluation)
     for task in tasks:
@@ -204,7 +204,7 @@ for month in months:
     train_perf_dict = {}
     model = os.path.join(model_dir, month)
 
-    log = tools.load_log(model)
+    log = _tools.load_log(model)
 
     # info: perf_train already has form of 26 data points (one for each evaluation)
     for task in tasks:

@@ -1263,7 +1263,7 @@ def preprocess_WM(opened_xlsxFile, questionnare_files, list_allSessions, sequenc
         # --------------------------------------------------------------------------------------------------------------
         # Concatenate trial information for error anaylsis to response entries
         # currentConcatResponseEntriesFinal = np.concatenate([currentConcatResponseEntries, np.array(concatedValuesAndOccurrencesList, dtype=object).T.reshape((40, 1))],axis=0)
-        adjusted_concatedValuesAndOccurrencesList = [tools.adjust_ndarray_size(arr) for arr in concatedValuesAndOccurrencesList]
+        adjusted_concatedValuesAndOccurrencesList = [_tools.adjust_ndarray_size(arr) for arr in concatedValuesAndOccurrencesList]
         currentConcatResponseEntriesFinal = np.concatenate([currentConcatResponseEntries, np.array(adjusted_concatedValuesAndOccurrencesList, dtype=object).reshape((len(adjusted_concatedValuesAndOccurrencesList),6)).T],axis=0)
         # --------------------------------------------------------------------------------------------------------------
 

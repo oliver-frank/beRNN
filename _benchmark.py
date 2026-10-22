@@ -1369,7 +1369,7 @@ if __name__ == '__main__':
     hp = get_default_hp('all_benchmark')  # 'all_benchmark' - not important at this point as both sets have 12 tasks
     # attention: standard hp ##########################################################################################
 
-    hp['rule_trains'] = tools.rules_dict[ruleset]
+    hp['rule_trains'] = _tools.rules_dict[ruleset]
     hp['rules'] = hp['rule_trains']
     # Turn into rule_trains format
     hp['rule_probs'] = None

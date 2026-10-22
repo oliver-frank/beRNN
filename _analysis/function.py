@@ -34,10 +34,10 @@ def easy_activity_plot(model_dir, rule, monthsConsidered, mode):
 
         trial_dir = 'W://group_csp//analyses//oliver.frank//Data//BeRNN_' + model_dir.split('BeRNN_')[-1].split('_')[0] + '//PreprocessedData_wResp_ALL'
 
-        x, y, y_loc, file_stem = tools.load_trials(trial_dir, monthsConsidered, rule, mode)
+        x, y, y_loc, file_stem = _tools.load_trials(trial_dir, monthsConsidered, rule, mode)
 
         # info: ################################################################################################
-        fixation_steps = tools.getEpochSteps(y, file_stem)
+        fixation_steps = _tools.getEpochSteps(y, file_stem)
 
         # Creat c_mask for current batch
         if hp['loss_type'] == 'lsq':
@@ -65,11 +65,11 @@ def easy_activity_plot(model_dir, rule, monthsConsidered, mode):
 
         # info: ################################################################################################
 
-        feed_dict = tools.gen_feed_dict(model, x, y, c_mask, hp)
+        feed_dict = _tools.gen_feed_dict(model, x, y, c_mask, hp)
         h, y_hat = sess.run([model.h, model.y_hat], feed_dict=feed_dict)
 
         # trial = generate_trials(rule, hp, mode='test')
-        # feed_dict = tools.gen_feed_dict(model, trial, hp)
+        # feed_dict = _tools.gen_feed_dict(model, trial, hp)
         # h, y_hat = sess.run([model.h, model.y_hat], feed_dict=feed_dict)
         # # All matrices have shape (n_time, n_condition, n_neuron)
 
@@ -103,10 +103,10 @@ def pretty_inputoutput_plot(model_dir, rule, monthsConsidered, save=False, plot_
     with tf.Session() as sess:
         model.restore()
 
-        x, y, y_loc, file_stem = tools.load_trials(trial_dir, monthsConsidered, rule, mode)
+        x, y, y_loc, file_stem = _tools.load_trials(trial_dir, monthsConsidered, rule, mode)
 
         # info: ################################################################################################
-        fixation_steps = tools.getEpochSteps(y, file_stem)
+        fixation_steps = _tools.getEpochSteps(y, file_stem)
 
         # Creat c_mask for current batch
         if hp['loss_type'] == 'lsq':
@@ -134,7 +134,7 @@ def pretty_inputoutput_plot(model_dir, rule, monthsConsidered, save=False, plot_
 
         # info: ################################################################################################
 
-        feed_dict = tools.gen_feed_dict(model, x, y, c_mask, hp)
+        feed_dict = _tools.gen_feed_dict(model, x, y, c_mask, hp)
         h, y_hat = sess.run([model.h, model.y_hat], feed_dict=feed_dict)
 
         t_plot = np.arange(x.shape[0])*hp['dt']/1000

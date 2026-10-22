@@ -65,13 +65,13 @@ def getAndSafeModValue(data_dir, model_dir, hp, model, sess, log, step):
 
     # info. Keep variance filtering here to ensure stability of marker calculation during training
     # h_mean_all as basis for thresholding dead neurons as h_corr_all can result in high values for dead neurons
-    res = tools.load_pickle(fname)
+    res = _tools.load_pickle(fname)
     h_var_all_ = res['h_var_all']
     activityThreshold = 1e-3
     ind_active = np.where(h_var_all_.sum(axis=1) >= activityThreshold)[0]
 
     # h_corr_all as representative for modularity analysis reflecting similar neuron behavior
-    res2 = tools.load_pickle(fname2)
+    res2 = _tools.load_pickle(fname2)
     h_corr_all_ = res2['h_corr_all']
     h_corr_all_ = h_corr_all_.mean(axis=2)  # average over all tasks
 
@@ -105,7 +105,7 @@ def getAndSafeModValue(data_dir, model_dir, hp, model, sess, log, step):
             communities_sparse = greedy_modularity_communities(G_sparse)
             mod_value_sparse = modularity(G_sparse, communities_sparse)
             # participation
-            pc_dict = tools.participation_coefficient(G_sparse, communities_sparse)
+            pc_dict = _tools.participation_coefficient(G_sparse, communities_sparse)
             avg_participation = np.mean(list(pc_dict.values()))
 
         except Exception as e:
@@ -124,7 +124,7 @@ def getAndSafeModValue(data_dir, model_dir, hp, model, sess, log, step):
     log['modularity_sparse'].append(mod_value_sparse)
     log['average_participation'].append(avg_participation)
 
-    tools.save_log(log)
+    _tools.save_log(log)
 
 
 def get_default_hp(ruleset):
@@ -136,8 +136,8 @@ def get_default_hp(ruleset):
         hp : a dictionary containing training hpuration
     '''
 
-    num_ring = tools.get_num_ring(ruleset)
-    n_rule = tools.get_num_rule(ruleset)
+    num_ring = _tools.get_num_ring(ruleset)
+    n_rule = _tools.get_num_rule(ruleset)
 
     machine = 'local'  # 'local' 'pandora' 'hitkip'
     data = 'data_highDim'
@@ -267,10 +267,10 @@ def do_eval(sess, model, log, rule_train, eval_data, step, data_dir):
             try:
 
                 if hp['benchmark'] != True:
-                    x, y, y_loc, response = tools.load_trials(hp['rng'], task, mode, hp['batch_size'], eval_data,
+                    x, y, y_loc, response = _tools.load_trials(hp['rng'], task, mode, hp['batch_size'], eval_data,
                                                               False)  # y_loc is participantResponse_perfEvalForm
 
-                    c_mask = tools.create_cMask(y, response, hp, mode)
+                    c_mask = _tools.create_cMask(y, response, hp, mode)
 
                     # fix: for incongruence between y and response dimension 1
                     if c_mask is None:
@@ -296,7 +296,7 @@ def do_eval(sess, model, log, rule_train, eval_data, step, data_dir):
                     # # attention: CHANGES ####################################################
                     x, y, y_loc, c_mask = trial.x, trial.y, trial.y_loc, trial.c_mask
 
-                feed_dict = tools.gen_feed_dict(model, x, y, c_mask,
+                feed_dict = _tools.gen_feed_dict(model, x, y, c_mask,
                                                 hp)  # y: participnt response, that gives the lable for what the network is trained for
 
                 # head. new logic ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -470,7 +470,7 @@ def do_eval(sess, model, log, rule_train, eval_data, step, data_dir):
     # Save the model and log
     try:
         model.save()
-        tools.save_log(log)
+        _tools.save_log(log)
     except Exception as e:
         print(f"Warning: Could not save model/log due to {e}.")
 
@@ -497,7 +497,7 @@ def train(data_dir, model_dir, train_data, eval_data, hp=None, max_steps=4800, d
         training configuration is stored at model_dir/hp.json
     """
 
-    tools.mkdir_p(model_dir)
+    _tools.mkdir_p(model_dir)
 
     # attention: standard hp ##########################################################################################
     # Network parameters
@@ -511,7 +511,7 @@ def train(data_dir, model_dir, train_data, eval_data, hp=None, max_steps=4800, d
     # Rules to train and test. Rules in a set are trained together
     if rule_trains is None:
         # By default, training all rules available to this ruleset
-        hp['rule_trains'] = tools.rules_dict[ruleset]
+        hp['rule_trains'] = _tools.rules_dict[ruleset]
     else:
         hp['rule_trains'] = rule_trains
     hp['rules'] = hp['rule_trains']
@@ -528,7 +528,7 @@ def train(data_dir, model_dir, train_data, eval_data, hp=None, max_steps=4800, d
         hp['rule_probs'] = list(rule_prob / np.sum(rule_prob))
     # if robustnessTest != True:
     hp['seed'] = seed  # Plug in seed into rng creation for reproducability - default: 0
-    tools.save_hp(hp, model_dir)
+    _tools.save_hp(hp, model_dir)
 
     # info: Add 'rng' here after it was pop out
     hp['rng'] = np.random.default_rng()  # set rng_seed here for reproducability - default: not set
@@ -673,11 +673,11 @@ def train(data_dir, model_dir, train_data, eval_data, hp=None, max_steps=4800, d
                     mode = 'train'
 
                     if hp['benchmark'] != True:
-                        x, y, y_loc, response = tools.load_trials(hp['rng'], task, mode, hp['batch_size'],
+                        x, y, y_loc, response = _tools.load_trials(hp['rng'], task, mode, hp['batch_size'],
                                                                   train_data,
                                                                   False)  # y_loc is participantResponse_perfEvalForm
 
-                        c_mask = tools.create_cMask(y, response, hp, mode)
+                        c_mask = _tools.create_cMask(y, response, hp, mode)
 
                         # fix: for inconcruence between y and response dimension 1
                         if c_mask is None:
@@ -711,7 +711,7 @@ def train(data_dir, model_dir, train_data, eval_data, hp=None, max_steps=4800, d
                     trialsLoaded += 1
 
                     # Generating feed_dict.
-                    feed_dict = tools.gen_feed_dict(model, x, y, c_mask, hp)
+                    feed_dict = _tools.gen_feed_dict(model, x, y, c_mask, hp)
                     # print('passed feed_dict Training')
                     # print(feed_dict)
 
@@ -892,14 +892,14 @@ if __name__ == '__main__':
 
             if hp['generalizationTest'] == True:
                 # Create train and eval data
-                train_data, eval_data = tools.createSplittedDatasets_generalizationTest(hp, preprocessedData_path,
+                train_data, eval_data = _tools.createSplittedDatasets_generalizationTest(hp, preprocessedData_path,
                                                                                         month, hp['distanceOfEvaluationData'])
             elif hp['participant'] == 'beRNN_00':
-                train_data, eval_data = tools.createSplittedDatasets_beRNN_00(hp, preprocessedData_path, month)
+                train_data, eval_data = _tools.createSplittedDatasets_beRNN_00(hp, preprocessedData_path, month)
 
             else:
                 # Create train and eval data
-                train_data, eval_data = tools.createSplittedDatasets(hp, preprocessedData_path, month)
+                train_data, eval_data = _tools.createSplittedDatasets(hp, preprocessedData_path, month)
 
             # info: If you want to initialize the new model with an old one
             # load_dir = 'C:\\Users\\oliver.frank\\Desktop\\PyProjects\\beRNNmodels\\2025_03\\sc_mask_final\\beRNN_03_All_3-5_data_highDim_correctOnly_iteration1_LeakyRNN_1000_relu\\model_month_3'

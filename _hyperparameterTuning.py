@@ -111,8 +111,8 @@ elif hitkip_local:
 else:
     # attention: local ##############################################################################################
     # Get input and output dimension for network, depending on higDim and lowDim data and ruleset (standard: 'all')
-    num_ring = tools.get_num_ring('all')
-    n_rule = tools.get_num_rule('all')
+    num_ring = _tools.get_num_ring('all')
+    n_rule = _tools.get_num_rule('all')
     # Choose right dataset
     data = ['data_highDim_correctOnly']
     # data = ['data_highDim', 'data_highDim_correctOnly', 'data_highDim_lowCognition', 'data_lowDim', 'data_lowDim_correctOnly', 'data_lowDim_lowCognition']
@@ -352,7 +352,7 @@ for modelNumber, params in enumerate(sampled_combinations):
                     file_quartett.append((input_file, yloc_file, output_file, response_file))
 
             # Split the file triplets
-            train_files, eval_files = tools.split_files(params, file_quartett)
+            train_files, eval_files = _tools.split_files(params, file_quartett)
 
             # Store the results in the dictionaries
             train_data[subdir] = train_files

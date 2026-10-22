@@ -90,7 +90,7 @@ def compute_rdm(task_matrix, rdm_metric, normalize=False):
 class Analysis(object):
     def __init__(self, data_dir, model_dir, layer, rdm_metric, mode, monthsConsidered, data_type, networkAnalysis, normalization_method='sum'):
 
-        hp = tools.load_hp(model_dir)
+        hp = _tools.load_hp(model_dir)
 
         # multiLayer *******************************************************************************************
         # # Do a task variance _analysis for each hidden layer
@@ -110,17 +110,17 @@ class Analysis(object):
         fname, fname2, fname3, fname4 = variance.compute_variance(data_dir, model_dir, layer, mode, monthsConsidered, data_type, networkAnalysis)
 
         # fname = r'C:\Users\oliver.frank\Desktop\PyProjects\beRNNmodels\_gridSearch_domainTask-EF_beRNN_03_highDim_64\highDim\beRNN_03\1\beRNN_03_AllTask_4-6_data_highDim_trainingBatch1_iteration3_LeakyRNN_64_softplus\model_month_6\var_test_lay1_rule_taskSubset.pkl'
-        # res = tools.load_pickle(fname)
+        # res = _tools.load_pickle(fname)
 
-        res = tools.load_pickle(fname)
-        # res3 = tools.load_pickle(fname3) # only necessary for rdm
+        res = _tools.load_pickle(fname)
+        # res3 = _tools.load_pickle(fname3) # only necessary for rdm
         h_var_all_ = res['h_var_all']
         # h_mean_all = res3['h_mean_all']
 
         self.keys  = res['keys']
 
         # h_corr_all as representative for modularity analysis reflecting similar neuron behavior
-        res2 = tools.load_pickle(fname2)
+        res2 = _tools.load_pickle(fname2)
         h_corr_all_ = res2['h_corr_all']
         h_corr_all = h_corr_all_.mean(axis=2)  # average over all tasks
 
@@ -148,7 +148,7 @@ class Analysis(object):
             print(f"Creating dummy clustering and rdm for model {model_dir} — insufficient data or variance.")
 
             # Determine expected dimensions safely
-            hp = tools.load_hp(model_dir)
+            hp = _tools.load_hp(model_dir)
             rules = [key for key in hp["rule_prob_map"].keys() if hp["rule_prob_map"][key] != 0]
             n_tasks = len(rules)
             n_units = h_var_all.shape[0]
@@ -416,18 +416,18 @@ class Analysis(object):
                         print('Evaluate task: ', task)
                         mode = mode_.split('_')[-1]
                         # if mode == 'test':
-                        #     x, y, y_loc, response = tools.load_trials(task, mode, hp['batch_size'], eval_data, False)
+                        #     x, y, y_loc, response = _tools.load_trials(task, mode, hp['batch_size'], eval_data, False)
                         # elif mode == 'train':
-                        #     x, y, y_loc, response = tools.load_trials(task, mode, hp['batch_size'], train_data, False)
+                        #     x, y, y_loc, response = _tools.load_trials(task, mode, hp['batch_size'], train_data, False)
 
                         # Fallback for taskRepresentation.py - hp['rng'] is popped out before saving in training
                         if 'rng' not in hp:
                             hp['rng'] = np.random.default_rng()
 
                         if mode == 'test':
-                            x, y, y_loc, response = tools.load_trials(hp['rng'], task, mode, hp['batch_size'], eval_data, False)
+                            x, y, y_loc, response = _tools.load_trials(hp['rng'], task, mode, hp['batch_size'], eval_data, False)
                         elif mode == 'train':
-                            x, y, y_loc, response = tools.load_trials(hp['rng'], task, mode, hp['batch_size'], train_data, False)  # y_loc is participantResponse_perfEvalForm
+                            x, y, y_loc, response = _tools.load_trials(hp['rng'], task, mode, hp['batch_size'], train_data, False)  # y_loc is participantResponse_perfEvalForm
                         # Create cMask
                         c_mask = create_cMask(y, response, hp, mode)
 
@@ -435,16 +435,16 @@ class Analysis(object):
                         #     continue
 
                         # # Generating feed_dict.
-                        # feed_dict = tools.gen_feed_dict(model, x, y, c_mask, hp)
+                        # feed_dict = _tools.gen_feed_dict(model, x, y, c_mask, hp)
                         #
                         # h = sess.run(model.train_step,
                         #              feed_dict=feed_dict)  # info: Trainables are actualized - train_step should represent the step in _training.py and the global_step in network.py
                         #
 
-                        # epochs = tools.find_epochs(x)
+                        # epochs = _tools.find_epochs(x)
                         #
                         # # info: ################################################################################################
-                        # fixation_steps = tools.getEpochSteps(y)
+                        # fixation_steps = _tools.getEpochSteps(y)
                         #
                         # # Create c_mask for current batch
                         # if hp['loss_type'] == 'lsq':
@@ -472,7 +472,7 @@ class Analysis(object):
                         #     c_mask /= c_mask.mean()
                         # # info: ################################################################################################
 
-                        feed_dict = tools.gen_feed_dict(model, x, y, c_mask, hp)
+                        feed_dict = _tools.gen_feed_dict(model, x, y, c_mask, hp)
                         y_hat_test, c_lsq = sess.run([model.y_hat, model.cost_lsq], feed_dict=feed_dict)
                         # attention ####################################################################################
 

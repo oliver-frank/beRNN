@@ -37,8 +37,8 @@ def compute_n_cluster(model_dirs, mode):
         print('********************************************************************************************************')
         print(model_dir)
         try:
-            hp = tools.load_hp(model_dir)
-            log = tools.load_log(model_dir)
+            hp = _tools.load_hp(model_dir)
+            log = _tools.load_log(model_dir)
             dataFolder = define_data_folder(model_dir.split('_'))
             # participant = [i for i in model_dir.split('\\') if 'beRNN_' in i][0]
             participant = '_'.join(['beRNN', [string for string in model_dir.split('_') if '0' in string and len(string) == 2][0]])
@@ -47,7 +47,7 @@ def compute_n_cluster(model_dirs, mode):
             # Important overwriting of incongruent information in hp between single and multiLayer architecture
             hp['n_rnn'] = hp['n_rnn_per_layer'][0] if hp.get('multiLayer') else hp['n_rnn']
             hp['activation'] = hp['activations_per_layer'][0] if hp.get('multiLayer') else hp['activation']
-            tools.save_hp(hp, model_dir)
+            _tools.save_hp(hp, model_dir)
 
 
             # Average performance for training at the last time point ##################################################
@@ -89,7 +89,7 @@ def compute_n_cluster(model_dirs, mode):
             log['score'] = 0  # Yang legacy - dummy value
             # log['rdm'] = analysis.rdm.tolist() # not ideal for saving as json
             log['model_dir'] = model_dir
-            tools.save_log(log)
+            _tools.save_log(log)
 
             # except IOError:
                 # Training never finished
@@ -107,10 +107,10 @@ def compute_n_cluster(model_dirs, mode):
         except Exception as e:
             print(f"An exception occurred in compute_n_cluster: {e}")
             # Overwrite existing log with fallback variables - never save_log without load_log as empirical data will be overwritten
-            log = tools.load_log(model_dir)
+            log = _tools.load_log(model_dir)
             log['model_dir'] = model_dir # info. important for overwriting directories of server trained models
-            # log = tools.load_log(r'C:\Users\oliver.frank\Desktop\PyProjects\beRNNmodels\_gridSearch_domainTask-DM_beRNN_03_highDim_16\highDim\beRNN_03\3\beRNN_03_AllTask_4-6_data_highDim_trainingBatch3_iteration2_LeakyRNN_16_relu\model_month_6\log.json')
-            # hp = tools.load_hp(model_dir)
+            # log = _tools.load_log(r'C:\Users\oliver.frank\Desktop\PyProjects\beRNNmodels\_gridSearch_domainTask-DM_beRNN_03_highDim_16\highDim\beRNN_03\3\beRNN_03_AllTask_4-6_data_highDim_trainingBatch3_iteration2_LeakyRNN_16_relu\model_month_6\log.json')
+            # hp = _tools.load_hp(model_dir)
 
             # Create fallback rdm
             # try:
@@ -156,7 +156,7 @@ def compute_n_cluster(model_dirs, mode):
             # Average performance for training at the last time point ##################################################
 
 
-            tools.save_log(log)
+            _tools.save_log(log)
 
             successful_model_dirs.append(model_dir)
             print("fallback done - dummy log created")
@@ -166,7 +166,7 @@ def compute_n_cluster(model_dirs, mode):
     return successful_model_dirs
 
 def get_n_clusters(model_dirs, density):
-    # model_dirs = tools.valid_model_dirs(root_dir)
+    # model_dirs = _tools.valid_model_dirs(root_dir)
     hp_list = list()
     n_clusters = list()
     silhouette_score = list()
@@ -188,8 +188,8 @@ def get_n_clusters(model_dirs, density):
         if i % 50 == 0:
             print('Analyzing model {:d}/{:d}'.format(i, len(model_dirs)))
         print(model_dir)
-        hp = tools.load_hp(model_dir)
-        log = tools.load_log(model_dir)
+        hp = _tools.load_hp(model_dir)
+        log = _tools.load_log(model_dir)
 
         # Handle internal matplotlib issue with None values for plotting legend
         if hp['learning_rate_mode'] is None:
@@ -234,13 +234,13 @@ def get_n_clusters(model_dirs, density):
             # info. variance filtering
             # h_mean_all as basis for thresholding dead neurons as h_corr_all can result in high values for dead neurons
             # leading to surpassing the threshold
-            res3 = tools.load_pickle(pkl_beRNN3)
+            res3 = _tools.load_pickle(pkl_beRNN3)
             h_var_all_ = res3['h_var_all']
             activityThreshold = 1e-3
             ind_active = np.where(h_var_all_.sum(axis=1) >= activityThreshold)[0]
 
             # h_corr_all as representative for modularity _analysis reflecting similar neuronal behavior over time and trials
-            res2 = tools.load_pickle(pkl_beRNN2)
+            res2 = _tools.load_pickle(pkl_beRNN2)
             h_corr_all = res2['h_corr_all']
             h_corr_all_ = h_corr_all.mean(axis=2)  # average over all tasks
 
@@ -289,7 +289,7 @@ def get_n_clusters(model_dirs, density):
                     mod_value_sparse = modularity(G_sparse, communities_sparse)
                     modularity_list_sparse.append(mod_value_sparse)
                     # participation
-                    pc_dict = tools.participation_coefficient(G_sparse, communities_sparse)
+                    pc_dict = _tools.participation_coefficient(G_sparse, communities_sparse)
                     avg_pc = np.mean(list(pc_dict.values()))
                     participation_coefficient_list.append(avg_pc)
 
@@ -345,9 +345,9 @@ def plot_histogram():
     initdictotherother = defaultdict(list)
 
     for model_dir in model_dirs:
-        hp = tools.load_hp(model_dir)
+        hp = _tools.load_hp(model_dir)
         # check if performance exceeds target
-        log = tools.load_log(model_dir)
+        log = _tools.load_log(model_dir)
         # if log['perf_avg'][-1] > hp['target_perf']:
         if log['perf_min'][-1] > hp['target_perf']: # attention: define well - maybe conservative th: 0.5 & liberal th: 0.7
             print('no. of clusters', log['n_cluster'])

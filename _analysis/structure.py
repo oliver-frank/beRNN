@@ -56,10 +56,10 @@ def schematic_plot(model_dir, monthsConsidered, rule, mode):
 
     with tf.Session() as sess:
         model.restore()
-        x, y, y_loc, file_stem = tools.load_trials(trial_dir, monthsConsidered, rule, mode)
+        x, y, y_loc, file_stem = _tools.load_trials(trial_dir, monthsConsidered, rule, mode)
 
         # info: ################################################################################################
-        fixation_steps = tools.getEpochSteps(y, file_stem)
+        fixation_steps = _tools.getEpochSteps(y, file_stem)
 
         # Creat c_mask for current batch
         if hp['loss_type'] == 'lsq':
@@ -87,7 +87,7 @@ def schematic_plot(model_dir, monthsConsidered, rule, mode):
 
         # info: ################################################################################################
 
-        feed_dict = tools.gen_feed_dict(model, x, y, c_mask, hp)
+        feed_dict = _tools.gen_feed_dict(model, x, y, c_mask, hp)
         h, y_hat = sess.run([model.h, model.y_hat], feed_dict=feed_dict)
 
 
