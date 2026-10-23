@@ -343,6 +343,7 @@ if plotTrainingEffectAsBoxPlots:
                 # info. Save the accuracies for each participant, month and task, respectively
                 participants_dict[participant][month_str][task] = task_data
 
+
                 if task_data:
                     x_pos = month_center + offsets[t_idx]
 
@@ -384,5 +385,11 @@ if plotTrainingEffectAsBoxPlots:
         figure_path = os.path.join(participant_dir, participant, f"{participant}_{strToSave}_SideBySide.pdf")
         plt.savefig(figure_path, bbox_inches='tight', dpi=300)
         plt.show()
+
+    # info. Save dict for LMM analysis
+    import pickle
+    # Save
+    with open(r'W:\group_csp\analyses\oliver.frank\Data\participants_dict_accuracy.pkl', 'wb') as f:
+        pickle.dump(participants_dict, f)
 
 
