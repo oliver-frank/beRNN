@@ -8,7 +8,7 @@ library(lmerTest)   # load after lme4
 # ==============================================================================
 # SHARED BLOCK - identical in all four scripts. Do not edit per model.
 # ==============================================================================
-out_dir     <- "W:\\group_csp\\analyses\\oliver.frank\\Data\\supplement_tables\\M3_dynamics_original"   # all CSVs / PNGs land here
+out_dir     <- "W:\\group_csp\\analyses\\oliver.frank\\Data\\supplement_tables\\M3_dynamics_correctOnly"
 RUN_POSTHOC <- FALSE                 # TRUE = additional Tukey contrasts over the time factor
 dir.create(out_dir, showWarnings = FALSE)
 
@@ -157,7 +157,7 @@ write_supplement <- function(results, prefix) {
 target_dir <- "C:/Users/oliver.frank/Desktop/PyProjects/beRNN/data/"
 markers    <- c("Marker_1", "Marker_2", "Marker_3")
 
-df <- list.files(target_dir, pattern = "trajectory_data_.*highDim.*\\.csv$", full.names = TRUE) %>%
+df <- list.files(target_dir, pattern = "trajectory_data_.*highDim_correctOnly.*\\.csv$", full.names = TRUE) %>%
   map_df(~ read_csv(.x, show_col_types = FALSE)) %>%
   mutate(
     Month_chr = as.character(Month),
@@ -169,9 +169,13 @@ df <- list.files(target_dir, pattern = "trajectory_data_.*highDim.*\\.csv$", ful
   mutate(Marker = factor(Marker, levels = markers))
 
 # ---- 2. Model ------------------------------------------------------------------
-m <- lmer(Value ~ Marker + Month + (1 | Subject) + (1 | Subject:Month), # excluded + (1 | Model_UID) for singularity issues
+m <- lmer(Value ~ Marker + Month + (1 | Subject) + (1 | Subject:Month), # excluded + (1 | Model_UID) for singularity issues - also was non significant
           data = df,
           control = lmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5)))
+
+# LRT for random effects
+library(lmerTest)
+ranova(m)
 
 # ---- 3. Supplement tables --------------------------------------------------------
 results <- list()

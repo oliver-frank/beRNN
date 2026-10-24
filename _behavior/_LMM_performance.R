@@ -8,10 +8,9 @@ library(tidyverse)
 library(glmmTMB)
 
 # ==============================================================================
-# HELPER BLOCK - glmmTMB version. Output columns match the lme4 version used in the
-# other three scripts (plus one extra column: beta-binomial dispersion phi).
+# HELPER BLOCK - glmmTMB version
 # ==============================================================================
-out_dir     <- "W:\\group_csp\\analyses\\oliver.frank\\Data\\supplement_tables\\M1_performance"   # all CSVs / PNGs land here
+out_dir     <- "W:\\group_csp\\analyses\\oliver.frank\\Data\\supplement_tables\\M1_performance" 
 RUN_POSTHOC <- FALSE                 # TRUE = additional Tukey contrasts over the time factor
 dir.create(out_dir, showWarnings = FALSE)
 
@@ -176,6 +175,11 @@ m <- glmmTMB(cbind(n_correct, n_wrong) ~ Month + Complexity + Task +
                (1 | Participant) + (1 | Participant:Month),
              data = df_final, family = betabinomial(link = "logit"),
              control = glmmTMBControl(optCtrl = list(iter.max = 1e4, eval.max = 1e4)))
+
+# LRT 
+m_noPart  <- update(m, . ~ . - (1 | Participant))
+m_noPM    <- update(m, . ~ . - (1 | Participant:Month))
+anova(m, m_noPart); anova(m, m_noPM)
 
 # ---- 3. Supplement tables --------------------------------------------------------
 results <- list()

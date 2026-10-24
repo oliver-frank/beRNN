@@ -1,14 +1,11 @@
 # ==============================================================================
 # M4 | Error profile | beta-binomial GLMM (glmmTMB, logit link), random intercepts only
-#      Outcome: errors in one category out of all errors made by that subject in that
-#      month (a share). One model per task; all tasks go into the same supplement tables.
-#      Replaces the Poisson-with-offset model, which was overdispersed and slow.
 # ==============================================================================
 library(tidyverse)
 library(glmmTMB)
 
 # ==============================================================================
-# HELPER BLOCK - glmmTMB version, identical to the helper in _LMM_accuracy.R
+# HELPER BLOCK - glmmTMB version
 # ==============================================================================
 out_dir     <- "W:\\group_csp\\analyses\\oliver.frank\\Data\\supplement_tables\\M4_errors"
 RUN_POSTHOC <- FALSE                 # TRUE = additional Tukey contrasts over the time factor
@@ -159,7 +156,7 @@ write_supplement <- function(results, prefix) {
 
 
 # ---- 1. Data -------------------------------------------------------------------
-data_path <- "C:\\Users\\oliver.frank\\Desktop\\PyProjects\\Data\\all_tasks_flat_counts_monthWise.csv"  # <- adjust
+data_path <- "C:\\Users\\oliver.frank\\Desktop\\PyProjects\\Data\\all_tasks_flat_counts_monthWise.csv"  
 all_data  <- read.csv(data_path, stringsAsFactors = FALSE)
 
 # ---- 2. Model (one per task) + 3. Supplement tables ------------------------------
@@ -180,10 +177,14 @@ for (current_task in unique(all_data$task)) {
   tryCatch({
     # Share of errors falling into a category. The subject-level and subject-by-month intercepts
     # are dropped on purpose: shares within a subject-month sum to 1, so a shift that applies to
-    # all categories at once cannot be estimated (the likely cause of the singular fits).
+    # all categories at once cannot be estimated.
     m <- glmmTMB(cbind(count, total - count) ~ category + month + (1 | subject:category),
                  data = d, family = betabinomial(link = "logit"),
                  control = glmmTMBControl(optCtrl = list(iter.max = 1e4, eval.max = 1e4)))
+    
+    # LRT 
+    m_noPart_Cat  <- update(m, . ~ . - (1 | subject:category))
+    print(anova(m, m_noPart_Cat))
     
     results[[model_id]] <- summarise_model(
       m, model_id = model_id,

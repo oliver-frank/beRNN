@@ -9,7 +9,7 @@ library(lmerTest)   # load after lme4
 # ==============================================================================
 # SHARED BLOCK - identical in all four scripts. Do not edit per model.
 # ==============================================================================
-out_dir     <- "W:\\group_csp\\analyses\\oliver.frank\\Data\\supplement_tables\\M2_reactionTime"   # all CSVs / PNGs land here
+out_dir     <- "W:\\group_csp\\analyses\\oliver.frank\\Data\\supplement_tables\\M2_reactionTime"  
 RUN_POSTHOC <- FALSE                 # TRUE = additional Tukey contrasts over the time factor
 dir.create(out_dir, showWarnings = FALSE)
 
@@ -184,6 +184,10 @@ m <- lmer(log(ReactionTime) ~ Month + Complexity + Task +
             (1 | Participant) + (1 | Participant:Month),
           data = df_final,
           control = lmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5)))
+
+# LRT for random effects
+library(lmerTest)
+ranova(m)
 
 # ---- 3. Supplement tables --------------------------------------------------------
 results <- list()
