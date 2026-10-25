@@ -1,5 +1,7 @@
 # ==============================================================================
-# M4 | Error profile | beta-binomial GLMM (glmmTMB, logit link), random intercepts only
+# M4 | Error profile (all tasks, one model) | binomial GLMM (glmmTMB, logit link), random intercepts only
+#      Categories are task-specific, so every category gets its own
+#      ID (Task::Category); the participant effect is category-specific: (1 | Participant:Category).
 # ==============================================================================
 library(tidyverse)
 library(glmmTMB)
@@ -7,7 +9,7 @@ library(glmmTMB)
 # ==============================================================================
 # HELPER BLOCK - glmmTMB version
 # ==============================================================================
-out_dir     <- "W:\\group_csp\\analyses\\oliver.frank\\Data\\supplement_tables\\M4_errors"
+out_dir     <- "W:\\group_csp\\analyses\\oliver.frank\\Data\\supplement_tables\\M4-3_errors"
 RUN_POSTHOC <- FALSE                 # TRUE = additional Tukey contrasts over the time factor
 dir.create(out_dir, showWarnings = FALSE)
 
@@ -41,31 +43,6 @@ summarise_model <- function(m, model_id, response, family_label,
     `N obs` = n_obs
   )
   
-  # ---- DHARMa diagnostics (simulated residuals; valid for models with their own dispersion) ----
-  set.seed(42)
-  sim <- DHARMa::simulateResiduals(m, n = n_sim, plot = FALSE)
-  tu     <- DHARMa::testUniformity(sim, plot = FALSE)
-  td     <- DHARMa::testDispersion(sim, plot = FALSE)
-  to     <- DHARMa::testOutliers(sim, plot = FALSE)
-  fmt_p  <- function(p) ifelse(p < 0.001, "< 0.001", sprintf("%.3f", p))
-  
-  # Test results go into a header ABOVE the panels, so plotted points can never cover them
-  png(file.path(out_dir, paste0(model_id, "_DHARMa.png")), width = 2000, height = 1000, res = 200)
-  par(mfrow = c(1, 2), oma = c(0, 0, 5, 0))
-  pt <- list(pch = 16, cex = 0.35, col = grDevices::adjustcolor("#2C7FB8", alpha.f = 0.35))   # blue dots, quantile lines stay red/black
-  do.call(DHARMa::plotQQunif, c(list(sim, testUniformity = FALSE, testOutliers = FALSE,
-                                     testDispersion = FALSE), pt))
-  do.call(DHARMa::plotResiduals, c(list(sim), pt))
-  mtext(paste0(model_id, "  |  n = ", nobs(m)), outer = TRUE, line = 3, font = 2, cex = 1)
-  mtext(sprintf("KS uniformity: D = %.3f, p %s   |   Dispersion: ratio = %.3f, p %s   |   Outliers: p %s",
-                as.numeric(tu$statistic), ifelse(tu$p.value < 0.001, "< 0.001", paste("=", fmt_p(tu$p.value))),
-                as.numeric(td$statistic), ifelse(td$p.value < 0.001, "< 0.001", paste("=", fmt_p(td$p.value))),
-                ifelse(to$p.value < 0.001, "< 0.001", paste("=", fmt_p(to$p.value)))),
-        outer = TRUE, line = 1, cex = 0.8)
-  dev.off()
-  disp   <- as.numeric(td$statistic)
-  disp_p <- td$p.value
-  
   # ---- Random effects + model-level information ---------------------------------
   vcc <- VarCorr(m)$cond
   vc  <- tibble(grp   = names(vcc),
@@ -88,6 +65,7 @@ summarise_model <- function(m, model_id, response, family_label,
   pdh  <- isTRUE(m$sdr$pdHess)
   conv <- paste0("nlminb; convergence code = ", m$fit$convergence, "; pdHess = ", pdh,
                  if (!pdh) " (WARNING: Hessian not positive-definite)" else "")
+  disp <- sum(residuals(m, type = "pearson")^2) / df.residual(m)   # Pearson chi2 / df (should be ~1)
   
   random <- vc %>% transmute(
     Model = model_id,
@@ -100,8 +78,7 @@ summarise_model <- function(m, model_id, response, family_label,
     `SD 95% CI upper (profile)` = NA_real_,
     ICC = vcov / denom,
     `Residual variance` = NA_real_,
-    `Dispersion (DHARMa)` = disp,
-    `Dispersion p (DHARMa)` = disp_p,
+    Dispersion = disp,
     `Dispersion parameter (φ)` = sigma(m),       # beta-binomial dispersion
     `Singular fit` = ifelse(any(sdcor < 1e-4), "Yes", "No"),
     Convergence = conv,
@@ -125,7 +102,13 @@ summarise_model <- function(m, model_id, response, family_label,
     Software = paste0("R ", getRversion(), "; glmmTMB ", packageVersion("glmmTMB"))
   )
   
-  # ---- Diagnostics table ----------------------------------------------------------
+  # ---- DHARMa diagnostics ---------------------------------------------------------
+  set.seed(42)
+  sim <- DHARMa::simulateResiduals(m, n = n_sim, plot = FALSE)
+  png(file.path(out_dir, paste0(model_id, "_DHARMa.png")), width = 1600, height = 800, res = 150)
+  plot(sim); dev.off()
+  tu <- DHARMa::testUniformity(sim, plot = FALSE)
+  td <- DHARMa::testDispersion(sim, plot = FALSE)
   diagnostics <- tibble(
     Model = model_id,
     Test = c("KS uniformity", "Dispersion"),
@@ -156,44 +139,73 @@ write_supplement <- function(results, prefix) {
 
 
 # ---- 1. Data -------------------------------------------------------------------
-data_path <- "C:\\Users\\oliver.frank\\Desktop\\PyProjects\\Data\\all_tasks_flat_counts_monthWise.csv"  
+data_path <- "C:\\Users\\oliver.frank\\Desktop\\PyProjects\\Data\\all_tasks_flat_counts_monthWise.csv"
 all_data  <- read.csv(data_path, stringsAsFactors = FALSE)
 
-# ---- 2. Model (one per task) + 3. Supplement tables ------------------------------
-results <- list()
-posthoc <- list()
+# One rule for all tasks: a category stays separate only if EVERY participant has >= MIN_COUNT_SUBJECT
+# counts in it; all other categories are summed into OTHER_RARE. Tasks with fewer than MIN_CATS such
+# categories are left out.
+MIN_COUNT_SUBJECT <- 10
+MIN_CATS          <- 2
+OTHER_LABEL       <- "OTHER_RARE"
 
-for (current_task in unique(all_data$task)) {
-  message("Task: ", current_task)
-  model_id <- paste0("M4_errors_", current_task)
-  
-  d <- all_data %>%
-    filter(task == current_task) %>%
-    group_by(error_category) %>% filter(sum(count) > 0) %>% ungroup() %>%   # drop empty categories
+prep_task <- function(dt, task_name) {
+  subj_mat <- xtabs(count ~ error_category + subject, data = dt)
+  keep     <- rownames(subj_mat)[apply(subj_mat, 1, min) >= MIN_COUNT_SUBJECT]
+  if (length(keep) < MIN_CATS) { message("Task ", task_name, " left out: < ", MIN_CATS, " categories"); return(NULL) }
+  cats <- if (nrow(subj_mat) > length(keep)) c(keep, OTHER_LABEL) else keep
+  dt %>%
+    mutate(error_category = ifelse(error_category %in% keep, error_category, OTHER_LABEL)) %>%
+    group_by(subject, month, error_category) %>%
+    summarise(count = sum(count), .groups = "drop") %>%
+    complete(nesting(subject, month), error_category = cats, fill = list(count = 0)) %>%
     group_by(subject, month) %>% mutate(total = sum(count)) %>% ungroup() %>%
-    filter(total > 0) %>%                                                   # drop months without errors
-    mutate(subject = factor(subject), month = factor(month), category = factor(error_category))
-  
-  tryCatch({
-    # Share of errors falling into a category. The subject-level and subject-by-month intercepts
-    # are dropped on purpose: shares within a subject-month sum to 1, so a shift that applies to
-    # all categories at once cannot be estimated.
-    m <- glmmTMB(cbind(count, total - count) ~ category + month + (1 | subject:category),
-                 data = d, family = betabinomial(link = "logit"),
-                 control = glmmTMBControl(optCtrl = list(iter.max = 1e4, eval.max = 1e4)))
-    
-    # LRT 
-    m_noPart_Cat  <- update(m, . ~ . - (1 | subject:category))
-    print(anova(m, m_noPart_Cat))
-    
-    results[[model_id]] <- summarise_model(
-      m, model_id = model_id,
-      response = "Share of errors in category (errors in category out of all errors per subject x month)",
-      family_label = "Beta-binomial (logit)", bt_label = "Odds ratio")
-    
-    if (RUN_POSTHOC) posthoc[[model_id]] <- posthoc_month(m, model_id, "month")
-  }, error = function(e) message("  failed: ", conditionMessage(e)))
+    filter(total > 0) %>%                                   # drop months without errors
+    mutate(task = task_name)
 }
 
+df_final <- bind_rows(lapply(unique(all_data$task),
+                             function(tk) prep_task(filter(all_data, task == tk), tk))) %>%
+  transmute(Participant = factor(subject),
+            Month       = factor(month),
+            Task        = factor(task),
+            Category    = factor(paste(task, error_category, sep = "::")),   # task-specific category ID
+            count, total)
+
+# How many counts end up in OTHER_RARE per task?
+df_final %>% group_by(Task) %>%
+  summarise(n_categories = n_distinct(Category),
+            pct_other    = round(100 * sum(count[grepl(paste0("::", OTHER_LABEL, "$"), Category)]) / sum(count), 2)) %>%
+  as.data.frame() %>% print(row.names = FALSE)
+
+# ---- 2. Model ------------------------------------------------------------------
+# Participant / Participant:Month intercepts of the accuracy model are not estimable here (shares within a
+# participant-month sum to 1), so the participant effect is category-specific.
+# Binomial (no extra dispersion term): a beta-binomial / observation-level term had no overdispersion left
+# to explain (variance ~ 0) and made the Hessian non-positive-definite.
+m <- glmmTMB(cbind(count, total - count) ~ Month + Task +
+               (1 | Category) + (1 | Participant:Category),
+             data = df_final, family = binomial(link = "logit"),
+             control = glmmTMBControl(optCtrl = list(iter.max = 1e4, eval.max = 1e4)))
+print(summary(m))
+cat("pdHess:", isTRUE(m$sdr$pdHess), "\n")
+if (!isTRUE(m$sdr$pdHess)) warning("Hessian not positive-definite: do NOT interpret the LRTs below.")
+
+# Overdispersion check (should be ~1; if clearly > 1, add (1 | obs) with df_final$obs <- factor(seq_len(nrow(df_final))))
+cat("Pearson chi2 / df:", sum(residuals(m, type = "pearson")^2) / df.residual(m), "\n")
+
+# LRT
+m_noPart <- update(m, . ~ . - (1 | Participant:Category))   # do participants differ in their error profile?
+m_noCat  <- update(m, . ~ . - (1 | Category))
+anova(m, m_noPart); anova(m, m_noCat)
+
+# ---- 3. Supplement tables --------------------------------------------------------
+results <- list()
+results[["M4_errors"]] <- summarise_model(
+  m, model_id = "M4_errors",
+  response = "Share of errors in category (errors in category out of all errors per participant x month x task)",
+  family_label = "Binomial (logit)", bt_label = "Odds ratio")
 write_supplement(results, "M4_errors")
-if (RUN_POSTHOC) write_excel_csv2(bind_rows(posthoc), file.path(out_dir, "M4_errors_posthoc_month.csv"))
+
+if (RUN_POSTHOC) write_excel_csv2(posthoc_month(m, "M4_errors", "Month"),
+                                  file.path(out_dir, "M4_errors_posthoc_Month.csv"))

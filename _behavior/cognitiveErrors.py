@@ -59,7 +59,16 @@ if errorDistributions:
             return float(obj)
         raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable")
 
+
     def plot_errorDistribution_relative(errors_dict, directory, participant, task, granularity, titleAdd, ax=None):
+        # --- NEW: Filter categories to only include those with > 10 occurrences ---
+        # errors_dict = {cat: values for cat, values in errors_dict.items() if len(values) > 1}
+
+        # # Return early if no categories meet the threshold
+        # if not errors_dict:
+        #     print(f"No categories with > 10 occurrences found for {participant} - {task}.")
+        #     return []
+
         # Prepare data for plotting
         categories = list(errors_dict.keys())
         total_occurrences = sum(len(values) for values in errors_dict.values())
@@ -95,7 +104,7 @@ if errorDistributions:
         for i, (cat, val, color) in enumerate(zip(categories, occurrences, colors)):
             ax.barh(i, val, color=color, height=bar_thickness, alpha=0.5)
 
-        # --- NEW: Smooth, Comparable Density Trend Curve ---
+        # --- Smooth, Comparable Density Trend Curve ---
         # Recreate the underlying vertical data frequency to compute the true density
         y_data_points = []
         for i, cat in enumerate(categories):
@@ -103,15 +112,13 @@ if errorDistributions:
 
         if len(y_data_points) > 1:
             # 'bw_method' controls smoothing.
-            # Increase this number (e.g., 0.6 to 1.0) for a broader, smoother general trend.
             kde = gaussian_kde(y_data_points, bw_method=0.7)
 
             # Evaluate density smoothly across the vertical category axis
             y_smooth = np.linspace(0, len(categories) - 1, 300)
             density_values = kde(y_smooth)
 
-            # IMPORTANT FOR COMPARISON: Scale the raw density values to match your percentage axis.
-            # This keeps the curve height aligned and proportional to the max bar magnitude.
+            # Scale the raw density values to match your percentage axis.
             scaling_factor = max(occurrences) / max(density_values)
             x_smooth = density_values * scaling_factor
 
@@ -346,8 +353,9 @@ if errorDistributions:
                 errors_dict_fineGrained[currentChosenList].append(sortedResponse[:, i])
         return errors_dict_fineGrained
 
-    participant = 'beRNN_05'
-    focusedMonths = ['month_1','month_2','month_3','month_4','month_5','month_6','month_7', 'month_8', 'month_9', 'month_10', 'month_11', 'month_12']
+    participant = 'beRNN_04'
+    # focusedMonths = ['month_1','month_2','month_3','month_4','month_5','month_6','month_7','month_8','month_9','month_10','month_11','month_12']
+    focusedMonths = ['month_1','month_2','month_3','month_4','month_5','month_6','month_7']
     directory = f'C:\\Users\\oliver.frank\\Desktop\\PyProjects\\Data\\{participant}\\data_highDim' # info: whole script made for original dataset only
     dict_directory = rf'C:\Users\oliver.frank\Desktop\PyProjects\Data\{participant}\ErrorGraphics_monthWise'
 
@@ -392,7 +400,7 @@ if errorDistributions:
         list2 = ['responseOpposite', 'responseNone', 'responseOrtho']
         list3 = ['strengthDiff0', 'strengthDiff25', 'strengthDiff5', 'strengthDiff75']
         # Generating all combinations of categorical names
-        categorical_names = ['_'.join(combination) for combination in iter_tools.product(list1, list2, list3)]
+        categorical_names = ['_'.join(combination) for combination in itertools.product(list1, list2, list3)]
 
         ########################################################################################################################
         # DM -------------------------------------------------------------------------------------------------------------------
@@ -453,7 +461,7 @@ if errorDistributions:
         list3 = ['responseOpposite', 'responseNone', 'responseOrtho']
 
         # Generating all combinations of categorical names
-        categorical_names = ['_'.join(combination) for combination in iter_tools.product(list1, list2, list3)]
+        categorical_names = ['_'.join(combination) for combination in itertools.product(list1, list2, list3)]
 
         def get_errors_EF(Response, errors_dict, distract_dict, opposite_dict):
 
@@ -545,10 +553,10 @@ if errorDistributions:
                  'distractClassBlueCircle', 'distractClassBlueNonagon', 'distractClassBlueHeptagon', 'distractClassBluePentagon', 'distractClassBlueTriangle',\
                  'distractClassRedCircle', 'distractClassRedNonagon', 'distractClassRedHeptagon', 'distractClassRedPentagon', 'distractClassRedTriangle',\
                  'distractClassGreenCircle', 'distractClassGreenNonagon', 'distractClassGreenHeptagon', 'distractClassGreenPentagon', 'distractClassGreenTriangle',\
-                 'noResponse']
+                 'yellow_noResponse', 'blue_noResponse', 'red_noResponse', 'green_noResponse', 'noResponse']
 
         # Generating all combinations of categorical names
-        categorical_names = ['_'.join(combination) for combination in iter_tools.product(list1)]
+        categorical_names = ['_'.join(combination) for combination in itertools.product(list1)]
 
         def get_errors_RP(Response, errors_dict, opened_meta_file):
 
@@ -566,7 +574,16 @@ if errorDistributions:
                     elif Response[0, i].split('_')[0] in colorDict['ClassGreen']:
                         errorComponent_1 = 'distract' + 'ClassGreen' + participantResponse.split('_')[1].split('.')[0].capitalize()
                     else:
-                        errorComponent_1 = 'noResponse'
+                        if Response[2, i].split('_')[0] in colorDict['ClassYellow']:
+                            errorComponent_1 = 'yellow_noResponse'
+                        elif Response[2, i].split('_')[0] in colorDict['ClassBlue']:
+                            errorComponent_1 = 'blue_noResponse'
+                        elif Response[2, i].split('_')[0] in colorDict['ClassRed']:
+                            errorComponent_1 = 'red_noResponse'
+                        elif Response[2, i].split('_')[0] in colorDict['ClassGreen']:
+                            errorComponent_1 = 'green_noResponse'
+                        else:
+                            errorComponent_1 = 'noResponse'
 
                     # Concatenate error components
                     currentChosenList = f'{errorComponent_1}'
@@ -694,27 +711,31 @@ if errorDistributions:
         list1 = ['distractClassYellowCircle', 'distractClassYellowPolygon', 'distractClassYellowTriangle',\
                  'distractClassBlueCircle', 'distractClassBluePolygon', 'distractClassBlueTriangle',\
                  'distractClassRedCircle', 'distractClassRedPolygon', 'distractClassRedTriangle',\
-                 'distractClassGreenCircle', 'distractClassGreenPolygon', 'distractClassGreenTriangle',\
-                 'noResponse']
-        list2 = ['3stim']
-        list3 = ['diffColor_diffForm', 'simColor_diffForm', 'simColor_simForm']
+                 'distractClassGreenCircle', 'distractClassGreenPolygon', 'distractClassGreenTriangle', 'noResponse']
+        # list2 = ['3stim']
+        list3 = ['diffColor_diffForm', 'simColor_diffForm', 'diffColor_simForm', 'simColor_simForm'] # previous trial in comparison to current
+        # list4 = ['responseMatch', 'responseMismatch', 'responseNoResponse']
 
-        categorical_names_WM_1 = ['_'.join(combination) for combination in iter_tools.product(list1, list2, list3)]
-        categorical_names_WM_2 = ['_'.join(combination) for combination in iter_tools.product(list1, list3)]
+        # categorical_names_WM_1 = ['_'.join(combination) for combination in itertools.product(list1, list2, list3)]
+        categorical_names_WM_2 = ['_'.join(combination) for combination in itertools.product(list1, list3)]
 
-        categorical_names_WM = categorical_names_WM_1 + categorical_names_WM_2
+        # categorical_names_WM = categorical_names_WM_1 + categorical_names_WM_2
+        categorical_names_WM = categorical_names_WM_2
 
         # Create categorical names for WM_Ctx tasks
-        list1 = ['formClassCombi_CircleCircle', 'formClassCombi_CirclePolygon', 'formClassCombi_CircleTriangle',\
-                 'formClassCombi_PolygonPolygon', 'formClassCombi_PolygonTriangle', 'formClassCombi_TriangleTriangle']
-        list2 = ['3stim'] # info: naming for ctx tasks accidentally different than above
+        list1 = ['formClassCombi_CircleCircle_Match', 'formClassCombi_CirclePolygon_Match', 'formClassCombi_CircleTriangle_Match',\
+                 'formClassCombi_PolygonPolygon_Match', 'formClassCombi_PolygonTriangle_Match', 'formClassCombi_TriangleTriangle_Match', \
+                 'formClassCombi_CircleCircle_Mismatch', 'formClassCombi_CirclePolygon_Mismatch', 'formClassCombi_CircleTriangle_Mismatch', \
+                 'formClassCombi_PolygonPolygon_Mismatch', 'formClassCombi_PolygonTriangle_Mismatch', 'formClassCombi_TriangleTriangle_Mismatch', \
+                 'noResponse']
+        # list2 = ['3stim']
         list3 = ['diffColor_diffForm', 'simColor_diffForm','diffColor_simForm', 'simColor_simForm']
-        list4 = ['responseMatch', 'responseMismatch', 'responseNoResponse']
 
-        categorical_names_WM_Ctx_1 = ['_'.join(combination) for combination in iter_tools.product(list1, list2, list3, list4)]
-        categorical_names_WM_Ctx_2 = ['_'.join(combination) for combination in iter_tools.product(list1, list3, list4)]
+        # categorical_names_WM_Ctx_1 = ['_'.join(combination) for combination in itertools.product(list1, list2, list3)]
+        categorical_names_WM_Ctx_2 = ['_'.join(combination) for combination in itertools.product(list1, list3)]
 
-        categorical_names_WM_Ctx = categorical_names_WM_Ctx_2 + categorical_names_WM_Ctx_1
+        # categorical_names_WM_Ctx = categorical_names_WM_Ctx_2 + categorical_names_WM_Ctx_1
+        categorical_names_WM_Ctx = categorical_names_WM_Ctx_2
 
         # shows current trial in detail and similiarity in form and color to previous trials
         def get_errors_WM(Response, errors_dict, opened_meta_file):
@@ -758,6 +779,9 @@ if errorDistributions:
                         continue
 
                     errorComponent_2 = opened_meta_file['difficultyLevel'].split('trials_')[1]
+                    if '3stim_' in errorComponent_2:
+                        errorComponent_2 = errorComponent_2.split('3stim_')[1]
+
                     # Concatenate error components
                     currentChosenList = f'{errorComponent_1}_{errorComponent_2}'
 
@@ -793,14 +817,16 @@ if errorDistributions:
                         continue
 
                     errorComponent_2 = opened_meta_file['difficultyLevel'].split('trials_')[1]
+                    if '3stim_' in errorComponent_2:
+                        errorComponent_2 = errorComponent_2.split('3stim_')[1]
 
-                    if participantResponse == 'Match' or participantResponse == 'Mismatch':
-                        errorComponent_3 = 'response' + participantResponse
+                    if participantResponse == 'Match':
+                        currentChosenList = f'{errorComponent_1}_Match_{errorComponent_2}'
+                    elif participantResponse == 'Mismatch':
+                        currentChosenList = f'{errorComponent_1}_Mismatch_{errorComponent_2}'
                     else:
-                        errorComponent_3 = 'responseNoResponse'
-
-                    # Concatenate error components
-                    currentChosenList = f'{errorComponent_1}_{errorComponent_2}_{errorComponent_3}'
+                        # Merge all noResponses into one category - post-hoc adjustment for LMM analysis (singularity issues)
+                        currentChosenList = f'noResponse_{errorComponent_2}'
 
                     errors_dict[currentChosenList].append(Response[:, i])
 
