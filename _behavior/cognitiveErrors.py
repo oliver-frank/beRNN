@@ -89,9 +89,9 @@ if errorDistributions:
             fig, ax = plt.subplots(figsize=(2, 2))
 
         if granularity == 'rough' and 'WM_Ctx' in task:
-            bar_thickness = 8.0
+            bar_thickness = 2.0
         elif granularity == 'rough' and 'WM' in task:
-            bar_thickness = 4.0
+            bar_thickness = 2.0
         elif granularity == 'rough':
             bar_thickness = 1.0
         elif granularity == 'fine':
@@ -357,591 +357,641 @@ if errorDistributions:
     # focusedMonths = ['month_1','month_2','month_3','month_4','month_5','month_6','month_7','month_8','month_9','month_10','month_11','month_12']
     focusedMonths = ['month_1','month_2','month_3','month_4','month_5','month_6','month_7']
     directory = f'C:\\Users\\oliver.frank\\Desktop\\PyProjects\\Data\\{participant}\\data_highDim' # info: whole script made for original dataset only
-    dict_directory = rf'C:\Users\oliver.frank\Desktop\PyProjects\Data\{participant}\ErrorGraphics_monthWise'
+    dict_directory = rf'C:\Users\oliver.frank\Desktop\PyProjects\Data\{participant}\ErrorGraphics'
+    overall_months = True # monthwise has to be manually adjusted
 
-    for current_month in focusedMonths:
+    # for current_month in focusedMonths:
 
-        fig, axs = plt.subplots(12, 1, figsize=(2, 24))
-        # info: ################################################################################################################
-        # info: Decision Making
-        # info: ################################################################################################################
-        def get_errors_DM(Response, errors_dict, distract_dict, opposite_dict, strength_dict):
+    fig, axs = plt.subplots(12, 1, figsize=(2, 24))
+    # info: ################################################################################################################
+    # info: Decision Making
+    # info: ################################################################################################################
+    def get_errors_DM(Response, errors_dict, distract_dict, opposite_dict, strength_dict):
 
-            for i in range(Response.shape[1]):
-                # Choose task
-                participantResponse, correctResponse, correctStim, distractStim = Response[0:4, i]
-                # Evaluate errors
-                if participantResponse != correctResponse:
-                    errorComponent_1 = 'distractOpposite' if distract_dict.get(distractStim.split('_')[1]) == opposite_dict.get(correctResponse) \
-                        else 'distractSame' if distract_dict.get(distractStim.split('_')[1]) == correctResponse \
-                        else 'distractOrtho'
+        for i in range(Response.shape[1]):
+            # Choose task
+            participantResponse, correctResponse, correctStim, distractStim = Response[0:4, i]
+            # Evaluate errors
+            if participantResponse != correctResponse:
+                errorComponent_1 = 'distractOpposite' if distract_dict.get(distractStim.split('_')[1]) == opposite_dict.get(correctResponse) \
+                    else 'distractSame' if distract_dict.get(distractStim.split('_')[1]) == correctResponse \
+                    else 'distractOrtho'
 
-                    errorComponent_2 = 'responseOpposite' if participantResponse == opposite_dict.get(correctResponse) \
-                        else 'responseNone' if participantResponse == 'NoResponse' \
-                        else 'responseOrtho'
+                errorComponent_2 = 'responseOpposite' if participantResponse == opposite_dict.get(correctResponse) \
+                    else 'responseNone' if participantResponse == 'NoResponse' \
+                    else 'responseOrtho'
 
-                    strengthDiff =  abs(strength_dict.get(distractStim.split('_')[0], 0) - strength_dict.get(correctStim.split('_')[0], 0))
-                    errorComponent_3 = f'strengthDiff{int(strengthDiff * 100)}'
+                strengthDiff =  abs(strength_dict.get(distractStim.split('_')[0], 0) - strength_dict.get(correctStim.split('_')[0], 0))
+                errorComponent_3 = f'strengthDiff{int(strengthDiff * 100)}'
 
-                    # Concatenate error components
-                    currentChosenList = f'{errorComponent_1}_{errorComponent_2}_{errorComponent_3}'
+                # Concatenate error components
+                currentChosenList = f'{errorComponent_1}_{errorComponent_2}_{errorComponent_3}'
 
-                    errors_dict[currentChosenList].append(Response[:, i])
+                errors_dict[currentChosenList].append(Response[:, i])
 
-            return errors_dict
+        return errors_dict
 
-        # Define dicts
-        distract_dict = {'up.png':'U', 'down.png':'D', 'left.png':'L', 'right.png':'R'}
-        opposite_dict = {'D':'U', 'U':'D', 'R':'L', 'L':'R'}
-        strength_dict = {'lowest':0.25, 'low':0.5, 'strong':0.75, 'strongest':1.0}
+    # Define dicts
+    distract_dict = {'up.png':'U', 'down.png':'D', 'left.png':'L', 'right.png':'R'}
+    opposite_dict = {'D':'U', 'U':'D', 'R':'L', 'L':'R'}
+    strength_dict = {'lowest':0.25, 'low':0.5, 'strong':0.75, 'strongest':1.0}
 
-        # Create categorical names
-        list1 = ['distractOpposite', 'distractSame', 'distractOrtho']
-        list2 = ['responseOpposite', 'responseNone', 'responseOrtho']
-        list3 = ['strengthDiff0', 'strengthDiff25', 'strengthDiff5', 'strengthDiff75']
-        # Generating all combinations of categorical names
-        categorical_names = ['_'.join(combination) for combination in itertools.product(list1, list2, list3)]
+    # Create categorical names
+    list1 = ['distractOpposite', 'distractSame', 'distractOrtho']
+    list2 = ['responseOpposite', 'responseNone', 'responseOrtho']
+    list3 = ['strengthDiff0', 'strengthDiff25', 'strengthDiff5', 'strengthDiff75']
+    # Generating all combinations of categorical names
+    categorical_names = ['_'.join(combination) for combination in itertools.product(list1, list2, list3)]
 
-        ########################################################################################################################
-        # DM -------------------------------------------------------------------------------------------------------------------
-        errors_dict_DM = {name: [] for name in categorical_names}
-        # Get list of necessary files in directory
-        participantDirectory = os.path.join(directory, 'DM')
-        npy_files = glob.glob(os.path.join(participantDirectory, '*Response.npy'))
-        selected_months_files = [file for file in npy_files if current_month in file]
-        # selected_months_files = [file for file in npy_files if any(current_month in file for month in focusedMonths)]
+    ########################################################################################################################
+    # DM -------------------------------------------------------------------------------------------------------------------
+    errors_dict_DM = {name: [] for name in categorical_names}
+    # Get list of necessary files in directory
+    participantDirectory = os.path.join(directory, 'DM')
+    npy_files = glob.glob(os.path.join(participantDirectory, '*Response.npy'))
+    # selected_months_files = [file for file in npy_files if current_month in file]
+    selected_months_files = [file for file in npy_files if any(month in file for month in focusedMonths)]
 
-        for npy_file in selected_months_files:
-            # Use the function
-            Response = np.load(npy_file, allow_pickle=True)
-            # Sort the 4th and 5th row, so that HIGHER value is on 4th row. Sort 2nd and 3rd accordingly
-            sortedResponse = sort_rows_descending(Response)
-            errors_dict_DM = get_errors_DM(sortedResponse, errors_dict_DM, distract_dict, opposite_dict, strength_dict)
+    for npy_file in selected_months_files:
+        # Use the function
+        Response = np.load(npy_file, allow_pickle=True)
+        # Sort the 4th and 5th row, so that HIGHER value is on 4th row. Sort 2nd and 3rd accordingly
+        sortedResponse = sort_rows_descending(Response)
+        errors_dict_DM = get_errors_DM(sortedResponse, errors_dict_DM, distract_dict, opposite_dict, strength_dict)
 
-        # Save dict for other analysis
-        with open(os.path.join(dict_directory, f'errors_dict_DM_{participant}_{current_month}.pkl'), 'wb') as f:
-            pickle.dump(errors_dict_DM, f)
-        with open(os.path.join(dict_directory, f'errors_dict_DM_{participant}_{current_month}.json'), 'w', encoding='utf-8') as f:
-            json.dump(errors_dict_DM, f, ensure_ascii=False, indent=4, default=convert_numpy)
-        # Visualize results
-        top_four_categories = plot_errorDistribution_relative(errors_dict_DM, participantDirectory, participant, 'DM', 'rough', titleAdd = 'all', ax=axs[0])
+    # Save dict for other analysis
+    with open(os.path.join(dict_directory, f'errors_dict_DM_{participant}.pkl'), 'wb') as f:
+        pickle.dump(errors_dict_DM, f)
+    # with open(os.path.join(dict_directory, f'errors_dict_DM_{participant}_{current_month}.pkl'), 'wb') as f:
+    #     pickle.dump(errors_dict_DM, f)
+    with open(os.path.join(dict_directory, f'errors_dict_DM_{participant}.json'), 'w', encoding='utf-8') as f:
+        json.dump(errors_dict_DM, f, ensure_ascii=False, indent=4, default=convert_numpy)
+    # with open(os.path.join(dict_directory, f'errors_dict_DM_{participant}_{current_month}.json'), 'w', encoding='utf-8') as f:
+    #     json.dump(errors_dict_DM, f, ensure_ascii=False, indent=4, default=convert_numpy)
+    # Visualize results
+    top_four_categories = plot_errorDistribution_relative(errors_dict_DM, participantDirectory, participant, 'DM', 'rough', titleAdd = 'all', ax=axs[0])
 
-        ########################################################################################################################
-        # DM Anti --------------------------------------------------------------------------------------------------------------
-        errors_dict_DM_Anti = {name: [] for name in categorical_names}
-        # Get list of necessary files in directory
-        participantDirectory = os.path.join(directory, 'DM_Anti')
-        npy_files = glob.glob(os.path.join(participantDirectory, '*Response.npy'))
-        selected_months_files = [file for file in npy_files if any(month in file for month in focusedMonths)]
+    ########################################################################################################################
+    # DM Anti --------------------------------------------------------------------------------------------------------------
+    errors_dict_DM_Anti = {name: [] for name in categorical_names}
+    # Get list of necessary files in directory
+    participantDirectory = os.path.join(directory, 'DM_Anti')
+    npy_files = glob.glob(os.path.join(participantDirectory, '*Response.npy'))
+    selected_months_files = [file for file in npy_files if any(month in file for month in focusedMonths)]
 
-        for npy_file in selected_months_files:
-            Response = np.load(npy_file, allow_pickle=True)
-            # Sort the 4th and 5th row, so that LOWER value is on 4th row. Sort 2nd and 3rd accordingly
-            sortedResponse = sort_rows_ascending(Response)
-            errors_dict_DM_Anti = get_errors_DM(sortedResponse, errors_dict_DM_Anti, distract_dict, opposite_dict, strength_dict)
+    for npy_file in selected_months_files:
+        Response = np.load(npy_file, allow_pickle=True)
+        # Sort the 4th and 5th row, so that LOWER value is on 4th row. Sort 2nd and 3rd accordingly
+        sortedResponse = sort_rows_ascending(Response)
+        errors_dict_DM_Anti = get_errors_DM(sortedResponse, errors_dict_DM_Anti, distract_dict, opposite_dict, strength_dict)
 
-        # Save dict for other analysis
-        with open(os.path.join(dict_directory, f'errors_dict_DM_Anti_{participant}_{current_month}.pkl'), 'wb') as f:
-            pickle.dump(errors_dict_DM_Anti, f)
-        with open(os.path.join(dict_directory, f'errors_dict_DM_Anti_{participant}_{current_month}.json'), 'w', encoding='utf-8') as f:
-            json.dump(errors_dict_DM_Anti, f, ensure_ascii=False, indent=4, default=convert_numpy)
-        # Visualize results
-        top_four_categories = plot_errorDistribution_relative(errors_dict_DM_Anti,participantDirectory, participant, 'DM_Anti', 'rough', titleAdd = 'all', ax=axs[1])
+    # Save dict for other analysis
+    with open(os.path.join(dict_directory, f'errors_dict_DM_Anti_{participant}.pkl'), 'wb') as f:
+        pickle.dump(errors_dict_DM_Anti, f)
+    with open(os.path.join(dict_directory, f'errors_dict_DM_Anti_{participant}.json'), 'w', encoding='utf-8') as f:
+        json.dump(errors_dict_DM_Anti, f, ensure_ascii=False, indent=4, default=convert_numpy)
+    # with open(os.path.join(dict_directory, f'errors_dict_DM_Anti_{participant}_{current_month}.pkl'), 'wb') as f:
+    #     pickle.dump(errors_dict_DM_Anti, f)
+    # with open(os.path.join(dict_directory, f'errors_dict_DM_Anti_{participant}_{current_month}.json'), 'w', encoding='utf-8') as f:
+    #     json.dump(errors_dict_DM_Anti, f, ensure_ascii=False, indent=4, default=convert_numpy)
+    # Visualize results
+    top_four_categories = plot_errorDistribution_relative(errors_dict_DM_Anti,participantDirectory, participant, 'DM_Anti', 'rough', titleAdd = 'all', ax=axs[1])
 
-        # info: ################################################################################################################
-        # info: Executive Functioning
-        # info: ################################################################################################################
-        # Define dicts
-        distract_dict = {'up.png':'U', 'down.png':'D', 'left.png':'L', 'right.png':'R', 'X.png':'X'}
-        opposite_dict = {'D':'U', 'U':'D', 'R':'L', 'L':'R'}
+    # info: ################################################################################################################
+    # info: Executive Functioning
+    # info: ################################################################################################################
+    # Define dicts
+    distract_dict = {'up.png':'U', 'down.png':'D', 'left.png':'L', 'right.png':'R', 'X.png':'X'}
+    opposite_dict = {'D':'U', 'U':'D', 'R':'L', 'L':'R'}
 
-        # Create categorical names
-        list1 = ['distractOpposite', 'distractSame', 'distractOrtho', 'distractX']
-        list2 = ['colorsDiff', 'colorsSame']
-        list3 = ['responseOpposite', 'responseNone', 'responseOrtho']
+    # Create categorical names
+    list1 = ['distractOpposite', 'distractSame', 'distractOrtho', 'distractX']
+    list2 = ['colorsDiff', 'colorsSame']
+    list3 = ['responseOpposite', 'responseNone', 'responseOrtho']
 
-        # Generating all combinations of categorical names
-        categorical_names = ['_'.join(combination) for combination in itertools.product(list1, list2, list3)]
+    # Generating all combinations of categorical names
+    categorical_names = ['_'.join(combination) for combination in itertools.product(list1, list2, list3)]
 
-        def get_errors_EF(Response, errors_dict, distract_dict, opposite_dict):
+    def get_errors_EF(Response, errors_dict, distract_dict, opposite_dict):
 
-            for i in range(Response.shape[1]):
-                if Response[5,i] == '10':
-                    Response[2,i] = Response[3,i]
-                participantResponse, correctResponse, correctStim, distractStim = Response[0:4, i]
-                # Evaluate errors
-                if participantResponse != correctResponse:
-                    errorComponent_1 = 'distractOpposite' if distract_dict.get(distractStim.split('_')[1]) == opposite_dict.get(
-                        correctResponse) \
-                        else 'distractSame' if distract_dict.get(distractStim.split('_')[1]) == correctResponse \
-                        else 'distractX' if distract_dict.get(distractStim.split('_')[1]) == 'X' \
-                        else 'distractOrtho'
+        for i in range(Response.shape[1]):
+            if Response[5,i] == '10':
+                Response[2,i] = Response[3,i]
+            participantResponse, correctResponse, correctStim, distractStim = Response[0:4, i]
+            # Evaluate errors
+            if participantResponse != correctResponse:
+                errorComponent_1 = 'distractOpposite' if distract_dict.get(distractStim.split('_')[1]) == opposite_dict.get(
+                    correctResponse) \
+                    else 'distractSame' if distract_dict.get(distractStim.split('_')[1]) == correctResponse \
+                    else 'distractX' if distract_dict.get(distractStim.split('_')[1]) == 'X' \
+                    else 'distractOrtho'
 
-                    if distractStim.split('_')[0] == correctStim.split('_')[0]:
-                        errorComponent_2 = 'colorsSame'
+                if distractStim.split('_')[0] == correctStim.split('_')[0]:
+                    errorComponent_2 = 'colorsSame'
+                else:
+                    errorComponent_2 = 'colorsDiff'
+
+                errorComponent_3 = 'responseOpposite' if participantResponse == opposite_dict.get(correctResponse) \
+                    else 'responseNone' if participantResponse == 'NoResponse' \
+                    else 'responseOrtho'
+
+                # Concatenate error components
+                currentChosenList = f'{errorComponent_1}_{errorComponent_2}_{errorComponent_3}'
+
+                errors_dict[currentChosenList].append(Response[:, i])
+
+        return errors_dict
+
+    ########################################################################################################################
+    # EF -------------------------------------------------------------------------------------------------------------------
+    errors_dict_EF = {name: [] for name in categorical_names}
+    # Get list of necessary files in directory
+    participantDirectory = os.path.join(directory, 'EF')
+    npy_files = glob.glob(os.path.join(participantDirectory, '*Response.npy'))
+    selected_months_files = [file for file in npy_files if any(month in file for month in focusedMonths)]
+
+    for npy_file in selected_months_files:
+        # Use the function
+        Response = np.load(npy_file, allow_pickle=True)
+        # Sort the 4th and 5th row, so that LOWER value is on 4th row. Sort 2nd and 3rd accordingly
+        sortedResponse = sort_rows_ascending(Response)
+        errors_dict_EF = get_errors_EF(sortedResponse, errors_dict_EF, distract_dict, opposite_dict)
+
+    # Save dict for other analysis
+    # with open(os.path.join(dict_directory, f'errors_dict_EF_{participant}_{current_month}.pkl'), 'wb') as f:
+    #     pickle.dump(errors_dict_EF, f)
+    # with open(os.path.join(dict_directory, f'errors_dict_EF_{participant}_{current_month}.json'), 'w', encoding='utf-8') as f:
+    #     json.dump(errors_dict_EF, f, ensure_ascii=False, indent=4, default=convert_numpy)
+    with open(os.path.join(dict_directory, f'errors_dict_EF_{participant}.pkl'), 'wb') as f:
+        pickle.dump(errors_dict_EF, f)
+    with open(os.path.join(dict_directory, f'errors_dict_EF_{participant}.json'), 'w', encoding='utf-8') as f:
+        json.dump(errors_dict_EF, f, ensure_ascii=False, indent=4, default=convert_numpy)
+    # Visualize results
+    top_four_categories = plot_errorDistribution_relative(errors_dict_EF, participantDirectory, participant, 'EF', 'rough', titleAdd = 'all', ax=axs[2])
+
+    ########################################################################################################################
+    # EF Anti --------------------------------------------------------------------------------------------------------------
+    errors_dict_EF_Anti = {name: [] for name in categorical_names}
+    # Get list of necessary files in directory
+    participantDirectory = os.path.join(directory, 'EF_Anti')
+    npy_files = glob.glob(os.path.join(participantDirectory, '*Response.npy'))
+    selected_months_files = [file for file in npy_files if any(month in file for month in focusedMonths)]
+
+    for npy_file in selected_months_files:
+        # Use the function
+        Response = np.load(npy_file, allow_pickle=True)
+        # Sort the 4th and 5th row, so that LOWER value is on 4th row. Sort 2nd and 3rd accordingly
+        sortedResponse = sort_rows_ascending(Response)
+        errors_dict_EF_Anti = get_errors_EF(Response, errors_dict_EF_Anti, distract_dict, opposite_dict)
+
+    # Save dict for other analysis
+    # with open(os.path.join(dict_directory, f'errors_dict_EF_Anti_{participant}_{current_month}.pkl'), 'wb') as f:
+    #     pickle.dump(errors_dict_EF_Anti, f)
+    # with open(os.path.join(dict_directory, f'errors_dict_EF_Anti_{participant}_{current_month}.json'), 'w', encoding='utf-8') as f:
+    #     json.dump(errors_dict_EF_Anti, f, ensure_ascii=False, indent=4, default=convert_numpy)
+    with open(os.path.join(dict_directory, f'errors_dict_EF_Anti_{participant}.pkl'), 'wb') as f:
+        pickle.dump(errors_dict_EF_Anti, f)
+    with open(os.path.join(dict_directory, f'errors_dict_EF_Anti_{participant}.json'), 'w', encoding='utf-8') as f:
+        json.dump(errors_dict_EF_Anti, f, ensure_ascii=False, indent=4, default=convert_numpy)
+    # Visualize results
+    top_four_categories = plot_errorDistribution_relative(errors_dict_EF_Anti, participantDirectory, participant, 'EF_Anti', 'rough', titleAdd = 'all', ax=axs[3])
+
+    # info: ################################################################################################################
+    # info: Relational Processing
+    # info: ################################################################################################################
+    # Define dicts
+    colorDict = {'ClassYellow': ['yellow', 'amber', 'orange'],
+                 'ClassGreen' : ['green', 'lime', 'moss'],
+                 'ClassBlue': ['purple', 'violet', 'blue'],
+                 'ClassRed': ['rust', 'red', 'magenta']}
+
+    # Create categorical names
+    list1 = ['distractClassYellowCircle', 'distractClassYellowNonagon', 'distractClassYellowHeptagon', 'distractClassYellowPentagon', 'distractClassYellowTriangle',\
+             'distractClassBlueCircle', 'distractClassBlueNonagon', 'distractClassBlueHeptagon', 'distractClassBluePentagon', 'distractClassBlueTriangle',\
+             'distractClassRedCircle', 'distractClassRedNonagon', 'distractClassRedHeptagon', 'distractClassRedPentagon', 'distractClassRedTriangle',\
+             'distractClassGreenCircle', 'distractClassGreenNonagon', 'distractClassGreenHeptagon', 'distractClassGreenPentagon', 'distractClassGreenTriangle',\
+             'yellow_noResponse', 'blue_noResponse', 'red_noResponse', 'green_noResponse', 'noResponse']
+
+    # Generating all combinations of categorical names
+    categorical_names = ['_'.join(combination) for combination in itertools.product(list1)]
+
+    def get_errors_RP(Response, errors_dict, opened_meta_file):
+
+        for i in range(Response.shape[1]):
+            participantResponse, correctResponse, correctStim, distractStim = Response[0:4, i]
+            # Evaluate errors
+            if participantResponse != correctResponse:
+                # Chosen wrong distraction belonging class
+                if Response[0, i].split('_')[0] in colorDict['ClassYellow']:
+                    errorComponent_1 = 'distract' + 'ClassYellow' + participantResponse.split('_')[1].split('.')[0].capitalize()
+                elif Response[0, i].split('_')[0] in colorDict['ClassBlue']:
+                    errorComponent_1 = 'distract' + 'ClassBlue' + participantResponse.split('_')[1].split('.')[0].capitalize()
+                elif Response[0, i].split('_')[0] in colorDict['ClassRed']:
+                    errorComponent_1 = 'distract' + 'ClassRed' + participantResponse.split('_')[1].split('.')[0].capitalize()
+                elif Response[0, i].split('_')[0] in colorDict['ClassGreen']:
+                    errorComponent_1 = 'distract' + 'ClassGreen' + participantResponse.split('_')[1].split('.')[0].capitalize()
+                else:
+                    if Response[2, i].split('_')[0] in colorDict['ClassYellow']:
+                        errorComponent_1 = 'yellow_noResponse'
+                    elif Response[2, i].split('_')[0] in colorDict['ClassBlue']:
+                        errorComponent_1 = 'blue_noResponse'
+                    elif Response[2, i].split('_')[0] in colorDict['ClassRed']:
+                        errorComponent_1 = 'red_noResponse'
+                    elif Response[2, i].split('_')[0] in colorDict['ClassGreen']:
+                        errorComponent_1 = 'green_noResponse'
                     else:
-                        errorComponent_2 = 'colorsDiff'
-
-                    errorComponent_3 = 'responseOpposite' if participantResponse == opposite_dict.get(correctResponse) \
-                        else 'responseNone' if participantResponse == 'NoResponse' \
-                        else 'responseOrtho'
-
-                    # Concatenate error components
-                    currentChosenList = f'{errorComponent_1}_{errorComponent_2}_{errorComponent_3}'
-
-                    errors_dict[currentChosenList].append(Response[:, i])
-
-            return errors_dict
-
-        ########################################################################################################################
-        # EF -------------------------------------------------------------------------------------------------------------------
-        errors_dict_EF = {name: [] for name in categorical_names}
-        # Get list of necessary files in directory
-        participantDirectory = os.path.join(directory, 'EF')
-        npy_files = glob.glob(os.path.join(participantDirectory, '*Response.npy'))
-        selected_months_files = [file for file in npy_files if any(month in file for month in focusedMonths)]
-
-        for npy_file in selected_months_files:
-            # Use the function
-            Response = np.load(npy_file, allow_pickle=True)
-            # Sort the 4th and 5th row, so that LOWER value is on 4th row. Sort 2nd and 3rd accordingly
-            sortedResponse = sort_rows_ascending(Response)
-            errors_dict_EF = get_errors_EF(sortedResponse, errors_dict_EF, distract_dict, opposite_dict)
-
-        # Save dict for other analysis
-        with open(os.path.join(dict_directory, f'errors_dict_EF_{participant}_{current_month}.pkl'), 'wb') as f:
-            pickle.dump(errors_dict_EF, f)
-        with open(os.path.join(dict_directory, f'errors_dict_EF_{participant}_{current_month}.json'), 'w', encoding='utf-8') as f:
-            json.dump(errors_dict_EF, f, ensure_ascii=False, indent=4, default=convert_numpy)
-        # Visualize results
-        top_four_categories = plot_errorDistribution_relative(errors_dict_EF, participantDirectory, participant, 'EF', 'rough', titleAdd = 'all', ax=axs[2])
-
-        ########################################################################################################################
-        # EF Anti --------------------------------------------------------------------------------------------------------------
-        errors_dict_EF_Anti = {name: [] for name in categorical_names}
-        # Get list of necessary files in directory
-        participantDirectory = os.path.join(directory, 'EF_Anti')
-        npy_files = glob.glob(os.path.join(participantDirectory, '*Response.npy'))
-        selected_months_files = [file for file in npy_files if any(month in file for month in focusedMonths)]
-
-        for npy_file in selected_months_files:
-            # Use the function
-            Response = np.load(npy_file, allow_pickle=True)
-            # Sort the 4th and 5th row, so that LOWER value is on 4th row. Sort 2nd and 3rd accordingly
-            sortedResponse = sort_rows_ascending(Response)
-            errors_dict_EF_Anti = get_errors_EF(Response, errors_dict_EF_Anti, distract_dict, opposite_dict)
-
-        # Save dict for other analysis
-        with open(os.path.join(dict_directory, f'errors_dict_EF_Anti_{participant}_{current_month}.pkl'), 'wb') as f:
-            pickle.dump(errors_dict_EF_Anti, f)
-        with open(os.path.join(dict_directory, f'errors_dict_EF_Anti_{participant}_{current_month}.json'), 'w', encoding='utf-8') as f:
-            json.dump(errors_dict_EF_Anti, f, ensure_ascii=False, indent=4, default=convert_numpy)
-        # Visualize results
-        top_four_categories = plot_errorDistribution_relative(errors_dict_EF_Anti, participantDirectory, participant, 'EF_Anti', 'rough', titleAdd = 'all', ax=axs[3])
-
-        # info: ################################################################################################################
-        # info: Relational Processing
-        # info: ################################################################################################################
-        # Define dicts
-        colorDict = {'ClassYellow': ['yellow', 'amber', 'orange'],
-                     'ClassGreen' : ['green', 'lime', 'moss'],
-                     'ClassBlue': ['purple', 'violet', 'blue'],
-                     'ClassRed': ['rust', 'red', 'magenta']}
-
-        # Create categorical names
-        list1 = ['distractClassYellowCircle', 'distractClassYellowNonagon', 'distractClassYellowHeptagon', 'distractClassYellowPentagon', 'distractClassYellowTriangle',\
-                 'distractClassBlueCircle', 'distractClassBlueNonagon', 'distractClassBlueHeptagon', 'distractClassBluePentagon', 'distractClassBlueTriangle',\
-                 'distractClassRedCircle', 'distractClassRedNonagon', 'distractClassRedHeptagon', 'distractClassRedPentagon', 'distractClassRedTriangle',\
-                 'distractClassGreenCircle', 'distractClassGreenNonagon', 'distractClassGreenHeptagon', 'distractClassGreenPentagon', 'distractClassGreenTriangle',\
-                 'yellow_noResponse', 'blue_noResponse', 'red_noResponse', 'green_noResponse', 'noResponse']
-
-        # Generating all combinations of categorical names
-        categorical_names = ['_'.join(combination) for combination in itertools.product(list1)]
-
-        def get_errors_RP(Response, errors_dict, opened_meta_file):
-
-            for i in range(Response.shape[1]):
-                participantResponse, correctResponse, correctStim, distractStim = Response[0:4, i]
-                # Evaluate errors
-                if participantResponse != correctResponse:
-                    # Chosen wrong distraction belonging class
-                    if Response[0, i].split('_')[0] in colorDict['ClassYellow']:
-                        errorComponent_1 = 'distract' + 'ClassYellow' + participantResponse.split('_')[1].split('.')[0].capitalize()
-                    elif Response[0, i].split('_')[0] in colorDict['ClassBlue']:
-                        errorComponent_1 = 'distract' + 'ClassBlue' + participantResponse.split('_')[1].split('.')[0].capitalize()
-                    elif Response[0, i].split('_')[0] in colorDict['ClassRed']:
-                        errorComponent_1 = 'distract' + 'ClassRed' + participantResponse.split('_')[1].split('.')[0].capitalize()
-                    elif Response[0, i].split('_')[0] in colorDict['ClassGreen']:
-                        errorComponent_1 = 'distract' + 'ClassGreen' + participantResponse.split('_')[1].split('.')[0].capitalize()
-                    else:
-                        if Response[2, i].split('_')[0] in colorDict['ClassYellow']:
-                            errorComponent_1 = 'yellow_noResponse'
-                        elif Response[2, i].split('_')[0] in colorDict['ClassBlue']:
-                            errorComponent_1 = 'blue_noResponse'
-                        elif Response[2, i].split('_')[0] in colorDict['ClassRed']:
-                            errorComponent_1 = 'red_noResponse'
-                        elif Response[2, i].split('_')[0] in colorDict['ClassGreen']:
-                            errorComponent_1 = 'green_noResponse'
-                        else:
-                            errorComponent_1 = 'noResponse'
-
-                    # Concatenate error components
-                    currentChosenList = f'{errorComponent_1}'
-
-                    errors_dict[currentChosenList].append(Response[:, i])
-
-            return errors_dict
-
-        ########################################################################################################################
-        # RP -------------------------------------------------------------------------------------------------------------------
-        errors_dict_RP = {name: [] for name in categorical_names}
-        # Get list of necessary files in directory
-        participantDirectory = os.path.join(directory, 'RP')
-        npy_files = glob.glob(os.path.join(participantDirectory, '*Response.npy'))
-        meta_files = glob.glob(os.path.join(participantDirectory, '*Meta.json'))
-        selected_months_files = [file for file in npy_files if any(month in file for month in focusedMonths)]
-        selected_meta_files = [file for file in meta_files if any(month in file for month in focusedMonths)]
-
-        for npy_file, meta_file in zip(selected_months_files, selected_meta_files):
-            # Load the JSON content from the file
-            with open(meta_file, 'r') as file:
-                opened_meta_file = json.load(file)
-            # Use the function
-            Response = np.load(npy_file, allow_pickle=True)
-            errors_dict_RP = get_errors_RP(Response, errors_dict_RP, opened_meta_file)
-
-        # Save dict for other analysis
-        with open(os.path.join(dict_directory, f'errors_dict_RP_{participant}_{current_month}.pkl'), 'wb') as f:
-            pickle.dump(errors_dict_RP, f)
-        with open(os.path.join(dict_directory, f'errors_dict_RP_{participant}_{current_month}.json'), 'w', encoding='utf-8') as f:
-            json.dump(errors_dict_RP, f, ensure_ascii=False, indent=4, default=convert_numpy)
-        # Visualize results
-        top_four_categories = plot_errorDistribution_relative(errors_dict_RP,participantDirectory, participant, 'RP', 'rough', titleAdd = 'all', ax=axs[4])
-
-        ########################################################################################################################
-        # RP Anti --------------------------------------------------------------------------------------------------------------
-        errors_dict_RP_Anti = {name: [] for name in categorical_names}
-        # Get list of necessary files in directory
-        participantDirectory = os.path.join(directory, 'RP_Anti')
-        npy_files = glob.glob(os.path.join(participantDirectory, '*Response.npy'))
-        meta_files = glob.glob(os.path.join(participantDirectory, '*Meta.json'))
-        selected_months_files = [file for file in npy_files if any(month in file for month in focusedMonths)]
-        selected_meta_files = [file for file in meta_files if any(month in file for month in focusedMonths)]
-
-        for npy_file, meta_file in zip(selected_months_files, selected_meta_files):
-            # Load the JSON content from the file
-            with open(meta_file, 'r') as file:
-                opened_meta_file = json.load(file)
-            # Use the function
-            Response = np.load(npy_file, allow_pickle=True)
-            errors_dict_RP_Anti = get_errors_RP(Response, errors_dict_RP_Anti, opened_meta_file)
-
-        # Save dict for other analysis
-        with open(os.path.join(dict_directory, f'errors_dict_RP_Anti_{participant}_{current_month}.pkl'), 'wb') as f:
-            pickle.dump(errors_dict_RP_Anti, f)
-        with open(os.path.join(dict_directory, f'errors_dict_RP_Anti_{participant}_{current_month}.json'), 'w', encoding='utf-8') as f:
-            json.dump(errors_dict_RP_Anti, f, ensure_ascii=False, indent=4, default=convert_numpy)
-        # Visualize results
-        top_four_categories = plot_errorDistribution_relative(errors_dict_RP_Anti,participantDirectory, participant, 'RP_Anti', 'rough', titleAdd = 'all', ax=axs[5])
-
-        ########################################################################################################################
-        # RP Ctx1 --------------------------------------------------------------------------------------------------------------
-        errors_dict_RP_Ctx1 = {name: [] for name in categorical_names}
-        # Get list of necessary files in directory
-        participantDirectory = os.path.join(directory, 'RP_Ctx1')
-        npy_files = glob.glob(os.path.join(participantDirectory, '*Response.npy'))
-        meta_files = glob.glob(os.path.join(participantDirectory, '*Meta.json'))
-        selected_months_files = [file for file in npy_files if any(month in file for month in focusedMonths)]
-        selected_meta_files = [file for file in meta_files if any(month in file for month in focusedMonths)]
-
-        for npy_file, meta_file in zip(selected_months_files, selected_meta_files):
-            # Load the JSON content from the file
-            with open(meta_file, 'r') as file:
-                opened_meta_file = json.load(file)
-            # Use the function
-            Response = np.load(npy_file, allow_pickle=True)
-            errors_dict_RP_Ctx1 = get_errors_RP(Response, errors_dict_RP_Ctx1, opened_meta_file)
-
-        # Save dict for other analysis
-        with open(os.path.join(dict_directory, f'errors_dict_RP_Ctx1_{participant}_{current_month}.pkl'), 'wb') as f:
-            pickle.dump(errors_dict_RP_Ctx1, f)
-        with open(os.path.join(dict_directory, f'errors_dict_RP_Ctx1_{participant}_{current_month}.json'), 'w', encoding='utf-8') as f:
-            json.dump(errors_dict_RP_Ctx1, f, ensure_ascii=False, indent=4, default=convert_numpy)
-        # Visualize results
-        top_four_categories = plot_errorDistribution_relative(errors_dict_RP_Ctx1,participantDirectory, participant, 'RP_Ctx1', 'rough', titleAdd = 'all', ax=axs[6])
-
-        ########################################################################################################################
-        # RP Ctx2 --------------------------------------------------------------------------------------------------------------
-        errors_dict_RP_Ctx2 = {name: [] for name in categorical_names}
-        # Get list of necessary files in directory
-        participantDirectory = os.path.join(directory, 'RP_Ctx2')
-        npy_files = glob.glob(os.path.join(participantDirectory, '*Response.npy'))
-        meta_files = glob.glob(os.path.join(participantDirectory, '*Meta.json'))
-        selected_months_files = [file for file in npy_files if any(month in file for month in focusedMonths)]
-        selected_meta_files = [file for file in meta_files if any(month in file for month in focusedMonths)]
-
-        for npy_file, meta_file in zip(selected_months_files, selected_meta_files):
-            # Load the JSON content from the file
-            with open(meta_file, 'r') as file:
-                opened_meta_file = json.load(file)
-            # Use the function
-            Response = np.load(npy_file, allow_pickle=True)
-            errors_dict_RP_Ctx2 = get_errors_RP(Response, errors_dict_RP_Ctx2, opened_meta_file)
-
-        # Save dict for other analysis
-        with open(os.path.join(dict_directory, f'errors_dict_RP_Ctx2_{participant}_{current_month}.pkl'), 'wb') as f:
-            pickle.dump(errors_dict_RP_Ctx2, f)
-        with open(os.path.join(dict_directory, f'errors_dict_RP_Ctx2_{participant}_{current_month}.json'), 'w', encoding='utf-8') as f:
-            json.dump(errors_dict_RP_Ctx2, f, ensure_ascii=False, indent=4, default=convert_numpy)
-        # Visualize results
-        top_four_categories = plot_errorDistribution_relative(errors_dict_RP_Ctx2,participantDirectory, participant, 'RP_Ctx2', 'rough', titleAdd = 'all', ax=axs[7])
-
-        # info: ################################################################################################################
-        # info: Working Memory
-        # info: ################################################################################################################
-        colorDict = {'ClassYellow': ['yellow', 'amber', 'orange'],
-                     'ClassGreen' : ['green', 'lime', 'moss'],
-                     'ClassBlue': ['purple', 'violet', 'blue'],
-                     'ClassRed': ['rust', 'red', 'magenta']}
-        formDict = {'ClassCircle': ['circle', 'nonagon'],
-                    'ClassPolygon': ['heptagon', 'pentagon'],
-                    'ClassTriangle': ['triangle']}
-
-        # Create categorical names for WM tasks
-        list1 = ['distractClassYellowCircle', 'distractClassYellowPolygon', 'distractClassYellowTriangle',\
-                 'distractClassBlueCircle', 'distractClassBluePolygon', 'distractClassBlueTriangle',\
-                 'distractClassRedCircle', 'distractClassRedPolygon', 'distractClassRedTriangle',\
-                 'distractClassGreenCircle', 'distractClassGreenPolygon', 'distractClassGreenTriangle', 'noResponse']
-        # list2 = ['3stim']
-        list3 = ['diffColor_diffForm', 'simColor_diffForm', 'diffColor_simForm', 'simColor_simForm'] # previous trial in comparison to current
-        # list4 = ['responseMatch', 'responseMismatch', 'responseNoResponse']
-
-        # categorical_names_WM_1 = ['_'.join(combination) for combination in itertools.product(list1, list2, list3)]
-        categorical_names_WM_2 = ['_'.join(combination) for combination in itertools.product(list1, list3)]
-
-        # categorical_names_WM = categorical_names_WM_1 + categorical_names_WM_2
-        categorical_names_WM = categorical_names_WM_2
-
-        # Create categorical names for WM_Ctx tasks
-        list1 = ['formClassCombi_CircleCircle_Match', 'formClassCombi_CirclePolygon_Match', 'formClassCombi_CircleTriangle_Match',\
-                 'formClassCombi_PolygonPolygon_Match', 'formClassCombi_PolygonTriangle_Match', 'formClassCombi_TriangleTriangle_Match', \
-                 'formClassCombi_CircleCircle_Mismatch', 'formClassCombi_CirclePolygon_Mismatch', 'formClassCombi_CircleTriangle_Mismatch', \
-                 'formClassCombi_PolygonPolygon_Mismatch', 'formClassCombi_PolygonTriangle_Mismatch', 'formClassCombi_TriangleTriangle_Mismatch', \
-                 'noResponse']
-        # list2 = ['3stim']
-        list3 = ['diffColor_diffForm', 'simColor_diffForm','diffColor_simForm', 'simColor_simForm']
-
-        # categorical_names_WM_Ctx_1 = ['_'.join(combination) for combination in itertools.product(list1, list2, list3)]
-        categorical_names_WM_Ctx_2 = ['_'.join(combination) for combination in itertools.product(list1, list3)]
-
-        # categorical_names_WM_Ctx = categorical_names_WM_Ctx_2 + categorical_names_WM_Ctx_1
-        categorical_names_WM_Ctx = categorical_names_WM_Ctx_2
-
-        # shows current trial in detail and similiarity in form and color to previous trials
-        def get_errors_WM(Response, errors_dict, opened_meta_file):
-
-            for i in range(Response.shape[1]):
-                participantResponse, correctResponse, correctStim, distractStim = Response[0:4, i]
-                # Evaluate errors
-                if participantResponse != correctResponse:
-                    # Chosen wrong distraction belonging class
-                    if participantResponse.split('_')[0] in colorDict['ClassYellow']:
-                        if participantResponse.split('_')[1].split('.')[0] in formDict['ClassCircle']:
-                            errorComponent_1 = 'distract' + 'ClassYellow' + 'Circle'
-                        elif participantResponse.split('_')[1].split('.')[0] in formDict['ClassPolygon']:
-                            errorComponent_1 = 'distract' + 'ClassYellow' + 'Polygon'
-                        elif participantResponse.split('_')[1].split('.')[0] in formDict['ClassTriangle']:
-                            errorComponent_1 = 'distract' + 'ClassYellow' + 'Triangle'
-                    elif participantResponse.split('_')[0] in colorDict['ClassGreen']:
-                        if participantResponse.split('_')[1].split('.')[0] in formDict['ClassCircle']:
-                            errorComponent_1 = 'distract' + 'ClassGreen' + 'Circle'
-                        elif participantResponse.split('_')[1].split('.')[0] in formDict['ClassPolygon']:
-                            errorComponent_1 = 'distract' + 'ClassGreen' + 'Polygon'
-                        elif participantResponse.split('_')[1].split('.')[0] in formDict['ClassTriangle']:
-                            errorComponent_1 = 'distract' + 'ClassGreen' + 'Triangle'
-                    elif participantResponse.split('_')[0] in colorDict['ClassBlue']:
-                        if participantResponse.split('_')[1].split('.')[0] in formDict['ClassCircle']:
-                            errorComponent_1 = 'distract' + 'ClassBlue' + 'Circle'
-                        elif participantResponse.split('_')[1].split('.')[0] in formDict['ClassPolygon']:
-                            errorComponent_1 = 'distract' + 'ClassBlue' + 'Polygon'
-                        elif participantResponse.split('_')[1].split('.')[0] in formDict['ClassTriangle']:
-                            errorComponent_1 = 'distract' + 'ClassBlue' + 'Triangle'
-                    elif participantResponse.split('_')[0] in colorDict['ClassRed']:
-                        if participantResponse.split('_')[1].split('.')[0] in formDict['ClassCircle']:
-                            errorComponent_1 = 'distract' + 'ClassRed' + 'Circle'
-                        elif participantResponse.split('_')[1].split('.')[0] in formDict['ClassPolygon']:
-                            errorComponent_1 = 'distract' + 'ClassRed' + 'Polygon'
-                        elif participantResponse.split('_')[1].split('.')[0] in formDict['ClassTriangle']:
-                            errorComponent_1 = 'distract' + 'ClassRed' + 'Triangle'
-                    elif participantResponse.split('_')[0] == 'noResponse' or participantResponse.split('_')[0] == 'NoResponse':
                         errorComponent_1 = 'noResponse'
-                    else:
-                        continue
 
-                    errorComponent_2 = opened_meta_file['difficultyLevel'].split('trials_')[1]
-                    if '3stim_' in errorComponent_2:
-                        errorComponent_2 = errorComponent_2.split('3stim_')[1]
+                # Concatenate error components
+                currentChosenList = f'{errorComponent_1}'
 
-                    # Concatenate error components
-                    currentChosenList = f'{errorComponent_1}_{errorComponent_2}'
+                errors_dict[currentChosenList].append(Response[:, i])
 
-                    errors_dict[currentChosenList].append(Response[:, i])
+        return errors_dict
 
-            return errors_dict
+    ########################################################################################################################
+    # RP -------------------------------------------------------------------------------------------------------------------
+    errors_dict_RP = {name: [] for name in categorical_names}
+    # Get list of necessary files in directory
+    participantDirectory = os.path.join(directory, 'RP')
+    npy_files = glob.glob(os.path.join(participantDirectory, '*Response.npy'))
+    meta_files = glob.glob(os.path.join(participantDirectory, '*Meta.json'))
+    selected_months_files = [file for file in npy_files if any(month in file for month in focusedMonths)]
+    selected_meta_files = [file for file in meta_files if any(month in file for month in focusedMonths)]
 
-        def get_errors_WM_Ctx(Response, errors_dict, opened_meta_file):
+    for npy_file, meta_file in zip(selected_months_files, selected_meta_files):
+        # Load the JSON content from the file
+        with open(meta_file, 'r') as file:
+            opened_meta_file = json.load(file)
+        # Use the function
+        Response = np.load(npy_file, allow_pickle=True)
+        errors_dict_RP = get_errors_RP(Response, errors_dict_RP, opened_meta_file)
 
-            for i in range(Response.shape[1]):
-                participantResponse, correctResponse, Stim1, Stim2 = Response[0:4, i]
-                # Evaluate errors
-                if participantResponse != correctResponse:
-                    # Find this error's belonging to color class
-                    try:
-                        if Stim1.split('_')[1].split('.')[0] in formDict['ClassCircle'] and Stim2.split('_')[1].split('.')[0] in formDict['ClassCircle']:
-                            errorComponent_1 = 'formClassCombi_CircleCircle'
-                        elif Stim1.split('_')[1].split('.')[0] in formDict['ClassPolygon'] and Stim2.split('_')[1].split('.')[0] in formDict['ClassPolygon']:
-                            errorComponent_1 = 'formClassCombi_PolygonPolygon'
-                        elif Stim1.split('_')[1].split('.')[0] in formDict['ClassTriangle'] and Stim2.split('_')[1].split('.')[0] in formDict['ClassTriangle']:
-                            errorComponent_1 = 'formClassCombi_TriangleTriangle'
-                        elif Stim1.split('_')[1].split('.')[0] in formDict['ClassCircle'] and Stim2.split('_')[1].split('.')[0] in formDict['ClassPolygon'] or\
-                                Stim1.split('_')[1].split('.')[0] in formDict['ClassPolygon'] and Stim2.split('_')[1].split('.')[0] in formDict['ClassCircle']:
-                            errorComponent_1 = 'formClassCombi_CirclePolygon'
-                        elif Stim1.split('_')[1].split('.')[0] in formDict['ClassCircle'] and Stim2.split('_')[1].split('.')[0] in formDict['ClassTriangle'] or \
-                             Stim1.split('_')[1].split('.')[0] in formDict['ClassTriangle'] and Stim2.split('_')[1].split('.')[0] in formDict['ClassCircle']:
-                            errorComponent_1 = 'formClassCombi_CircleTriangle'
-                        elif Stim1.split('_')[1].split('.')[0] in formDict['ClassPolygon'] and Stim2.split('_')[1].split('.')[0] in formDict['ClassTriangle'] or \
-                             Stim1.split('_')[1].split('.')[0] in formDict['ClassTriangle'] and Stim2.split('_')[1].split('.')[0] in formDict['ClassPolygon']:
-                            errorComponent_1 = 'formClassCombi_PolygonTriangle'
-                    except Exception as e:
-                        print('Error occured: ', e) # info: Happens rarely if accidentally one of two stims is None
-                        continue
+    # Save dict for other analysis
+    # with open(os.path.join(dict_directory, f'errors_dict_RP_{participant}_{current_month}.pkl'), 'wb') as f:
+    #     pickle.dump(errors_dict_RP, f)
+    # with open(os.path.join(dict_directory, f'errors_dict_RP_{participant}_{current_month}.json'), 'w', encoding='utf-8') as f:
+    #     json.dump(errors_dict_RP, f, ensure_ascii=False, indent=4, default=convert_numpy)
+    with open(os.path.join(dict_directory, f'errors_dict_RP_{participant}.pkl'), 'wb') as f:
+        pickle.dump(errors_dict_RP, f)
+    with open(os.path.join(dict_directory, f'errors_dict_RP_{participant}.json'), 'w', encoding='utf-8') as f:
+        json.dump(errors_dict_RP, f, ensure_ascii=False, indent=4, default=convert_numpy)
+    # Visualize results
+    top_four_categories = plot_errorDistribution_relative(errors_dict_RP,participantDirectory, participant, 'RP', 'rough', titleAdd = 'all', ax=axs[4])
 
-                    errorComponent_2 = opened_meta_file['difficultyLevel'].split('trials_')[1]
-                    if '3stim_' in errorComponent_2:
-                        errorComponent_2 = errorComponent_2.split('3stim_')[1]
+    ########################################################################################################################
+    # RP Anti --------------------------------------------------------------------------------------------------------------
+    errors_dict_RP_Anti = {name: [] for name in categorical_names}
+    # Get list of necessary files in directory
+    participantDirectory = os.path.join(directory, 'RP_Anti')
+    npy_files = glob.glob(os.path.join(participantDirectory, '*Response.npy'))
+    meta_files = glob.glob(os.path.join(participantDirectory, '*Meta.json'))
+    selected_months_files = [file for file in npy_files if any(month in file for month in focusedMonths)]
+    selected_meta_files = [file for file in meta_files if any(month in file for month in focusedMonths)]
 
-                    if participantResponse == 'Match':
-                        currentChosenList = f'{errorComponent_1}_Match_{errorComponent_2}'
-                    elif participantResponse == 'Mismatch':
-                        currentChosenList = f'{errorComponent_1}_Mismatch_{errorComponent_2}'
-                    else:
-                        # Merge all noResponses into one category - post-hoc adjustment for LMM analysis (singularity issues)
-                        currentChosenList = f'noResponse_{errorComponent_2}'
+    for npy_file, meta_file in zip(selected_months_files, selected_meta_files):
+        # Load the JSON content from the file
+        with open(meta_file, 'r') as file:
+            opened_meta_file = json.load(file)
+        # Use the function
+        Response = np.load(npy_file, allow_pickle=True)
+        errors_dict_RP_Anti = get_errors_RP(Response, errors_dict_RP_Anti, opened_meta_file)
 
-                    errors_dict[currentChosenList].append(Response[:, i])
+    # Save dict for other analysis
+    # with open(os.path.join(dict_directory, f'errors_dict_RP_Anti_{participant}_{current_month}.pkl'), 'wb') as f:
+    #     pickle.dump(errors_dict_RP_Anti, f)
+    # with open(os.path.join(dict_directory, f'errors_dict_RP_Anti_{participant}_{current_month}.json'), 'w', encoding='utf-8') as f:
+    #     json.dump(errors_dict_RP_Anti, f, ensure_ascii=False, indent=4, default=convert_numpy)
+    with open(os.path.join(dict_directory, f'errors_dict_RP_Anti_{participant}.pkl'), 'wb') as f:
+        pickle.dump(errors_dict_RP_Anti, f)
+    with open(os.path.join(dict_directory, f'errors_dict_RP_Anti_{participant}.json'), 'w', encoding='utf-8') as f:
+        json.dump(errors_dict_RP_Anti, f, ensure_ascii=False, indent=4, default=convert_numpy)
+    # Visualize results
+    top_four_categories = plot_errorDistribution_relative(errors_dict_RP_Anti,participantDirectory, participant, 'RP_Anti', 'rough', titleAdd = 'all', ax=axs[5])
 
-            return errors_dict
+    ########################################################################################################################
+    # RP Ctx1 --------------------------------------------------------------------------------------------------------------
+    errors_dict_RP_Ctx1 = {name: [] for name in categorical_names}
+    # Get list of necessary files in directory
+    participantDirectory = os.path.join(directory, 'RP_Ctx1')
+    npy_files = glob.glob(os.path.join(participantDirectory, '*Response.npy'))
+    meta_files = glob.glob(os.path.join(participantDirectory, '*Meta.json'))
+    selected_months_files = [file for file in npy_files if any(month in file for month in focusedMonths)]
+    selected_meta_files = [file for file in meta_files if any(month in file for month in focusedMonths)]
 
-        ########################################################################################################################
-        # WM -------------------------------------------------------------------------------------------------------------------
-        errors_dict_WM = {name: [] for name in categorical_names_WM}
-        participantDirectory = os.path.join(directory, 'WM')
-        npy_files = glob.glob(os.path.join(participantDirectory, '*Response.npy'))
-        meta_files = glob.glob(os.path.join(participantDirectory, '*Meta.json'))
-        selected_npy_files = [file for file in npy_files if any(month in file for month in focusedMonths)]
-        selected_meta_files = [file for file in meta_files if any(month in file for month in focusedMonths)]
+    for npy_file, meta_file in zip(selected_months_files, selected_meta_files):
+        # Load the JSON content from the file
+        with open(meta_file, 'r') as file:
+            opened_meta_file = json.load(file)
+        # Use the function
+        Response = np.load(npy_file, allow_pickle=True)
+        errors_dict_RP_Ctx1 = get_errors_RP(Response, errors_dict_RP_Ctx1, opened_meta_file)
 
-        for npy_file, meta_file in zip(selected_npy_files, selected_meta_files):
-            # Load the JSON content from the file
-            with open(meta_file, 'r') as file:
-                opened_meta_file = json.load(file)
-            # Use the function
-            Response = np.load(npy_file, allow_pickle=True)
-            # Sort the correct stim on the 2nd row
-            sortedResponse = sort_rows_correctOn2(Response)
-            errors_dict_WM = get_errors_WM(sortedResponse, errors_dict_WM, opened_meta_file)
+    # Save dict for other analysis
+    # with open(os.path.join(dict_directory, f'errors_dict_RP_Ctx1_{participant}_{current_month}.pkl'), 'wb') as f:
+    #     pickle.dump(errors_dict_RP_Ctx1, f)
+    # with open(os.path.join(dict_directory, f'errors_dict_RP_Ctx1_{participant}_{current_month}.json'), 'w', encoding='utf-8') as f:
+    #     json.dump(errors_dict_RP_Ctx1, f, ensure_ascii=False, indent=4, default=convert_numpy)
+    with open(os.path.join(dict_directory, f'errors_dict_RP_Ctx1_{participant}.pkl'), 'wb') as f:
+        pickle.dump(errors_dict_RP_Ctx1, f)
+    with open(os.path.join(dict_directory, f'errors_dict_RP_Ctx1_{participant}.json'), 'w', encoding='utf-8') as f:
+        json.dump(errors_dict_RP_Ctx1, f, ensure_ascii=False, indent=4, default=convert_numpy)
+    # Visualize results
+    top_four_categories = plot_errorDistribution_relative(errors_dict_RP_Ctx1,participantDirectory, participant, 'RP_Ctx1', 'rough', titleAdd = 'all', ax=axs[6])
 
-        # Save dict for other analysis
-        with open(os.path.join(dict_directory, f'errors_dict_WM_{participant}_{current_month}.pkl'), 'wb') as f:
-            pickle.dump(errors_dict_WM, f)
-        with open(os.path.join(dict_directory, f'errors_dict_WM_{participant}_{current_month}.json'), 'w', encoding='utf-8') as f:
-            json.dump(errors_dict_WM, f, ensure_ascii=False, indent=4, default=convert_numpy)
-        # Visualize results
-        top_four_categories = plot_errorDistribution_relative(errors_dict_WM,participantDirectory, participant, 'WM', 'rough', titleAdd = 'all', ax=axs[8])
+    ########################################################################################################################
+    # RP Ctx2 --------------------------------------------------------------------------------------------------------------
+    errors_dict_RP_Ctx2 = {name: [] for name in categorical_names}
+    # Get list of necessary files in directory
+    participantDirectory = os.path.join(directory, 'RP_Ctx2')
+    npy_files = glob.glob(os.path.join(participantDirectory, '*Response.npy'))
+    meta_files = glob.glob(os.path.join(participantDirectory, '*Meta.json'))
+    selected_months_files = [file for file in npy_files if any(month in file for month in focusedMonths)]
+    selected_meta_files = [file for file in meta_files if any(month in file for month in focusedMonths)]
 
-        ########################################################################################################################
-        # WM Anti --------------------------------------------------------------------------------------------------------------
-        errors_dict_WM_Anti = {name: [] for name in categorical_names_WM}
-        participantDirectory = os.path.join(directory, 'WM_Anti')
-        npy_files = glob.glob(os.path.join(participantDirectory, '*Response.npy'))
-        meta_files = glob.glob(os.path.join(participantDirectory, '*Meta.json'))
-        selected_npy_files = [file for file in npy_files if any(month in file for month in focusedMonths)]
-        selected_meta_files = [file for file in meta_files if any(month in file for month in focusedMonths)]
+    for npy_file, meta_file in zip(selected_months_files, selected_meta_files):
+        # Load the JSON content from the file
+        with open(meta_file, 'r') as file:
+            opened_meta_file = json.load(file)
+        # Use the function
+        Response = np.load(npy_file, allow_pickle=True)
+        errors_dict_RP_Ctx2 = get_errors_RP(Response, errors_dict_RP_Ctx2, opened_meta_file)
 
-        for npy_file, meta_file in zip(selected_npy_files, selected_meta_files):
-            # Load the JSON content from the file
-            with open(meta_file, 'r') as file:
-                opened_meta_file = json.load(file)
-            # Use the function
-            Response = np.load(npy_file, allow_pickle=True)
-            # Sort the correct stim on the 2nd row
-            sortedResponse = sort_rows_correctOn2(Response)
-            errors_dict_WM_Anti = get_errors_WM(sortedResponse, errors_dict_WM_Anti, opened_meta_file)
+    # Save dict for other analysis
+    # with open(os.path.join(dict_directory, f'errors_dict_RP_Ctx2_{participant}_{current_month}.pkl'), 'wb') as f:
+    #     pickle.dump(errors_dict_RP_Ctx2, f)
+    # with open(os.path.join(dict_directory, f'errors_dict_RP_Ctx2_{participant}_{current_month}.json'), 'w', encoding='utf-8') as f:
+    #     json.dump(errors_dict_RP_Ctx2, f, ensure_ascii=False, indent=4, default=convert_numpy)
+    with open(os.path.join(dict_directory, f'errors_dict_RP_Ctx2_{participant}.pkl'), 'wb') as f:
+        pickle.dump(errors_dict_RP_Ctx2, f)
+    with open(os.path.join(dict_directory, f'errors_dict_RP_Ctx2_{participant}.json'), 'w', encoding='utf-8') as f:
+        json.dump(errors_dict_RP_Ctx2, f, ensure_ascii=False, indent=4, default=convert_numpy)
+    # Visualize results
+    top_four_categories = plot_errorDistribution_relative(errors_dict_RP_Ctx2,participantDirectory, participant, 'RP_Ctx2', 'rough', titleAdd = 'all', ax=axs[7])
 
-        # Save dict for other analysis
-        with open(os.path.join(dict_directory, f'errors_dict_WM_Anti_{participant}_{current_month}.pkl'), 'wb') as f:
-            pickle.dump(errors_dict_WM_Anti, f)
-        with open(os.path.join(dict_directory, f'errors_dict_WM_Anti_{participant}_{current_month}.json'), 'w', encoding='utf-8') as f:
-            json.dump(errors_dict_WM_Anti, f, ensure_ascii=False, indent=4, default=convert_numpy)
-        # Visualize results
-        top_four_categories = plot_errorDistribution_relative(errors_dict_WM_Anti,participantDirectory, participant, 'WM_Anti', 'rough', titleAdd = 'all', ax=axs[9])
+    # info: ################################################################################################################
+    # info: Working Memory
+    # info: ################################################################################################################
+    colorDict = {'ClassYellow': ['yellow', 'amber', 'orange'],
+                 'ClassGreen' : ['green', 'lime', 'moss'],
+                 'ClassBlue': ['purple', 'violet', 'blue'],
+                 'ClassRed': ['rust', 'red', 'magenta']}
+    formDict = {'ClassCircle': ['circle', 'nonagon'],
+                'ClassPolygon': ['heptagon', 'pentagon'],
+                'ClassTriangle': ['triangle']}
 
-        #######################################################################################################################
-        # WM Ctx1 --------------------------------------------------------------------------------------------------------------
-        errors_dict_WM_Ctx1 = {name: [] for name in categorical_names_WM_Ctx}
-        participantDirectory = os.path.join(directory, 'WM_Ctx1')
-        npy_files = glob.glob(os.path.join(participantDirectory, '*Response.npy'))
-        meta_files = glob.glob(os.path.join(participantDirectory, '*Meta.json'))
-        selected_npy_files = [file for file in npy_files if any(month in file for month in focusedMonths)]
-        selected_meta_files = [file for file in meta_files if any(month in file for month in focusedMonths)]
+    # Create categorical names for WM tasks
+    list1 = ['distractClassYellowCircle', 'distractClassYellowPolygon', 'distractClassYellowTriangle',\
+             'distractClassBlueCircle', 'distractClassBluePolygon', 'distractClassBlueTriangle',\
+             'distractClassRedCircle', 'distractClassRedPolygon', 'distractClassRedTriangle',\
+             'distractClassGreenCircle', 'distractClassGreenPolygon', 'distractClassGreenTriangle', 'noResponse']
+    # list2 = ['3stim']
+    list3 = ['diffColor_diffForm', 'simColor_diffForm', 'diffColor_simForm', 'simColor_simForm'] # previous trial in comparison to current
+    # list4 = ['responseMatch', 'responseMismatch', 'responseNoResponse']
 
-        for npy_file, meta_file in zip(selected_npy_files, selected_meta_files):
-            # Load the JSON content from the file
-            with open(meta_file, 'r') as file:
-                opened_meta_file = json.load(file)
-            # Use the function
-            Response = np.load(npy_file, allow_pickle=True)
-            errors_dict_WM_Ctx1 = get_errors_WM_Ctx(Response, errors_dict_WM_Ctx1, opened_meta_file)
+    # categorical_names_WM_1 = ['_'.join(combination) for combination in itertools.product(list1, list2, list3)]
+    categorical_names_WM_2 = ['_'.join(combination) for combination in itertools.product(list1, list3)]
 
-        # Save dict for other analysis
-        with open(os.path.join(dict_directory, f'errors_dict_WM_Ctx1_{participant}_{current_month}.pkl'), 'wb') as f:
-            pickle.dump(errors_dict_WM_Ctx1, f)
-        with open(os.path.join(dict_directory, f'errors_dict_WM_Ctx1_{participant}_{current_month}.json'), 'w', encoding='utf-8') as f:
-            json.dump(errors_dict_WM_Ctx1, f, ensure_ascii=False, indent=4, default=convert_numpy)
-        # Visualize results
-        top_four_categories = plot_errorDistribution_relative(errors_dict_WM_Ctx1,participantDirectory, participant, 'WM_Ctx1', 'rough', titleAdd = 'all', ax=axs[10])
+    # categorical_names_WM = categorical_names_WM_1 + categorical_names_WM_2
+    categorical_names_WM = categorical_names_WM_2
 
-        ########################################################################################################################
-        # WM Ctx2 --------------------------------------------------------------------------------------------------------------
-        errors_dict_WM_Ctx2 = {name: [] for name in categorical_names_WM_Ctx}
-        participantDirectory = os.path.join(directory, 'WM_Ctx2')
-        npy_files = glob.glob(os.path.join(participantDirectory, '*Response.npy'))
-        meta_files = glob.glob(os.path.join(participantDirectory, '*Meta.json'))
-        selected_npy_files = [file for file in npy_files if any(month in file for month in focusedMonths)]
-        selected_meta_files = [file for file in meta_files if any(month in file for month in focusedMonths)]
+    # Create categorical names for WM_Ctx tasks
+    list1 = ['formClassCombi_CircleCircle_Match', 'formClassCombi_CirclePolygon_Match', 'formClassCombi_CircleTriangle_Match',\
+             'formClassCombi_PolygonPolygon_Match', 'formClassCombi_PolygonTriangle_Match', 'formClassCombi_TriangleTriangle_Match', \
+             'formClassCombi_CircleCircle_Mismatch', 'formClassCombi_CirclePolygon_Mismatch', 'formClassCombi_CircleTriangle_Mismatch', \
+             'formClassCombi_PolygonPolygon_Mismatch', 'formClassCombi_PolygonTriangle_Mismatch', 'formClassCombi_TriangleTriangle_Mismatch', \
+             'noResponse']
+    # list2 = ['3stim']
+    list3 = ['diffColor_diffForm', 'simColor_diffForm','diffColor_simForm', 'simColor_simForm']
 
-        for npy_file, meta_file in zip(selected_npy_files, selected_meta_files):
-            # Load the JSON content from the file
-            with open(meta_file, 'r') as file:
-                opened_meta_file = json.load(file)
-            # Use the function
-            Response = np.load(npy_file, allow_pickle=True)
-            errors_dict_WM_Ctx2 = get_errors_WM_Ctx(Response, errors_dict_WM_Ctx2, opened_meta_file)
+    # categorical_names_WM_Ctx_1 = ['_'.join(combination) for combination in itertools.product(list1, list2, list3)]
+    categorical_names_WM_Ctx_2 = ['_'.join(combination) for combination in itertools.product(list1, list3)]
 
-        # Save dict for other analysis
-        with open(os.path.join(dict_directory, f'errors_dict_WM_Ctx2_{participant}_{current_month}.pkl'), 'wb') as f:
-            pickle.dump(errors_dict_WM_Ctx2, f)
-        with open(os.path.join(dict_directory, f'errors_dict_WM_Ctx2_{participant}_{current_month}.json'), 'w', encoding='utf-8') as f:
-            json.dump(errors_dict_WM_Ctx2, f, ensure_ascii=False, indent=4, default=convert_numpy)
-        # Visualize results
-        top_four_categories = plot_errorDistribution_relative(errors_dict_WM_Ctx2,participantDirectory, participant, 'WM_Ctx2', 'rough', titleAdd = 'all', ax=axs[11])
+    # categorical_names_WM_Ctx = categorical_names_WM_Ctx_2 + categorical_names_WM_Ctx_1
+    categorical_names_WM_Ctx = categorical_names_WM_Ctx_2
 
-        # Once all 12 are assigned, save the single master stacked image sheet
-        plt.tight_layout()
-        master_save_path = os.path.join(directory.split('\\data')[0], 'ErrorGraphics_monthWise', f'all_12_tasks_{participant}_{current_month}.pdf')
-        os.makedirs(os.path.dirname(master_save_path), exist_ok=True)
-        plt.savefig(master_save_path, dpi=100, bbox_inches='tight')
-        plt.close()
+    # shows current trial in detail and similiarity in form and color to previous trials
+    def get_errors_WM(Response, errors_dict, opened_meta_file):
+
+        for i in range(Response.shape[1]):
+            participantResponse, correctResponse, correctStim, distractStim = Response[0:4, i]
+            # Evaluate errors
+            if participantResponse != correctResponse:
+                # Chosen wrong distraction belonging class
+                if participantResponse.split('_')[0] in colorDict['ClassYellow']:
+                    if participantResponse.split('_')[1].split('.')[0] in formDict['ClassCircle']:
+                        errorComponent_1 = 'distract' + 'ClassYellow' + 'Circle'
+                    elif participantResponse.split('_')[1].split('.')[0] in formDict['ClassPolygon']:
+                        errorComponent_1 = 'distract' + 'ClassYellow' + 'Polygon'
+                    elif participantResponse.split('_')[1].split('.')[0] in formDict['ClassTriangle']:
+                        errorComponent_1 = 'distract' + 'ClassYellow' + 'Triangle'
+                elif participantResponse.split('_')[0] in colorDict['ClassGreen']:
+                    if participantResponse.split('_')[1].split('.')[0] in formDict['ClassCircle']:
+                        errorComponent_1 = 'distract' + 'ClassGreen' + 'Circle'
+                    elif participantResponse.split('_')[1].split('.')[0] in formDict['ClassPolygon']:
+                        errorComponent_1 = 'distract' + 'ClassGreen' + 'Polygon'
+                    elif participantResponse.split('_')[1].split('.')[0] in formDict['ClassTriangle']:
+                        errorComponent_1 = 'distract' + 'ClassGreen' + 'Triangle'
+                elif participantResponse.split('_')[0] in colorDict['ClassBlue']:
+                    if participantResponse.split('_')[1].split('.')[0] in formDict['ClassCircle']:
+                        errorComponent_1 = 'distract' + 'ClassBlue' + 'Circle'
+                    elif participantResponse.split('_')[1].split('.')[0] in formDict['ClassPolygon']:
+                        errorComponent_1 = 'distract' + 'ClassBlue' + 'Polygon'
+                    elif participantResponse.split('_')[1].split('.')[0] in formDict['ClassTriangle']:
+                        errorComponent_1 = 'distract' + 'ClassBlue' + 'Triangle'
+                elif participantResponse.split('_')[0] in colorDict['ClassRed']:
+                    if participantResponse.split('_')[1].split('.')[0] in formDict['ClassCircle']:
+                        errorComponent_1 = 'distract' + 'ClassRed' + 'Circle'
+                    elif participantResponse.split('_')[1].split('.')[0] in formDict['ClassPolygon']:
+                        errorComponent_1 = 'distract' + 'ClassRed' + 'Polygon'
+                    elif participantResponse.split('_')[1].split('.')[0] in formDict['ClassTriangle']:
+                        errorComponent_1 = 'distract' + 'ClassRed' + 'Triangle'
+                elif participantResponse.split('_')[0] == 'noResponse' or participantResponse.split('_')[0] == 'NoResponse':
+                    errorComponent_1 = 'noResponse'
+                else:
+                    continue
+
+                errorComponent_2 = opened_meta_file['difficultyLevel'].split('trials_')[1]
+                if '3stim_' in errorComponent_2:
+                    errorComponent_2 = errorComponent_2.split('3stim_')[1]
+
+                # Concatenate error components
+                currentChosenList = f'{errorComponent_1}_{errorComponent_2}'
+
+                errors_dict[currentChosenList].append(Response[:, i])
+
+        return errors_dict
+
+    def get_errors_WM_Ctx(Response, errors_dict, opened_meta_file):
+
+        for i in range(Response.shape[1]):
+            participantResponse, correctResponse, Stim1, Stim2 = Response[0:4, i]
+            # Evaluate errors
+            if participantResponse != correctResponse:
+                # Find this error's belonging to color class
+                try:
+                    if Stim1.split('_')[1].split('.')[0] in formDict['ClassCircle'] and Stim2.split('_')[1].split('.')[0] in formDict['ClassCircle']:
+                        errorComponent_1 = 'formClassCombi_CircleCircle'
+                    elif Stim1.split('_')[1].split('.')[0] in formDict['ClassPolygon'] and Stim2.split('_')[1].split('.')[0] in formDict['ClassPolygon']:
+                        errorComponent_1 = 'formClassCombi_PolygonPolygon'
+                    elif Stim1.split('_')[1].split('.')[0] in formDict['ClassTriangle'] and Stim2.split('_')[1].split('.')[0] in formDict['ClassTriangle']:
+                        errorComponent_1 = 'formClassCombi_TriangleTriangle'
+                    elif Stim1.split('_')[1].split('.')[0] in formDict['ClassCircle'] and Stim2.split('_')[1].split('.')[0] in formDict['ClassPolygon'] or\
+                            Stim1.split('_')[1].split('.')[0] in formDict['ClassPolygon'] and Stim2.split('_')[1].split('.')[0] in formDict['ClassCircle']:
+                        errorComponent_1 = 'formClassCombi_CirclePolygon'
+                    elif Stim1.split('_')[1].split('.')[0] in formDict['ClassCircle'] and Stim2.split('_')[1].split('.')[0] in formDict['ClassTriangle'] or \
+                         Stim1.split('_')[1].split('.')[0] in formDict['ClassTriangle'] and Stim2.split('_')[1].split('.')[0] in formDict['ClassCircle']:
+                        errorComponent_1 = 'formClassCombi_CircleTriangle'
+                    elif Stim1.split('_')[1].split('.')[0] in formDict['ClassPolygon'] and Stim2.split('_')[1].split('.')[0] in formDict['ClassTriangle'] or \
+                         Stim1.split('_')[1].split('.')[0] in formDict['ClassTriangle'] and Stim2.split('_')[1].split('.')[0] in formDict['ClassPolygon']:
+                        errorComponent_1 = 'formClassCombi_PolygonTriangle'
+                except Exception as e:
+                    print('Error occured: ', e) # info: Happens rarely if accidentally one of two stims is None
+                    continue
+
+                errorComponent_2 = opened_meta_file['difficultyLevel'].split('trials_')[1]
+                if '3stim_' in errorComponent_2:
+                    errorComponent_2 = errorComponent_2.split('3stim_')[1]
+
+                if participantResponse == 'Match':
+                    currentChosenList = f'{errorComponent_1}_Match_{errorComponent_2}'
+                elif participantResponse == 'Mismatch':
+                    currentChosenList = f'{errorComponent_1}_Mismatch_{errorComponent_2}'
+                else:
+                    # Merge all noResponses into one category - post-hoc adjustment for LMM analysis (singularity issues)
+                    currentChosenList = f'noResponse_{errorComponent_2}'
+
+                errors_dict[currentChosenList].append(Response[:, i])
+
+        return errors_dict
+
+    ########################################################################################################################
+    # WM -------------------------------------------------------------------------------------------------------------------
+    errors_dict_WM = {name: [] for name in categorical_names_WM}
+    participantDirectory = os.path.join(directory, 'WM')
+    npy_files = glob.glob(os.path.join(participantDirectory, '*Response.npy'))
+    meta_files = glob.glob(os.path.join(participantDirectory, '*Meta.json'))
+    selected_npy_files = [file for file in npy_files if any(month in file for month in focusedMonths)]
+    selected_meta_files = [file for file in meta_files if any(month in file for month in focusedMonths)]
+
+    for npy_file, meta_file in zip(selected_npy_files, selected_meta_files):
+        # Load the JSON content from the file
+        with open(meta_file, 'r') as file:
+            opened_meta_file = json.load(file)
+        # Use the function
+        Response = np.load(npy_file, allow_pickle=True)
+        # Sort the correct stim on the 2nd row
+        sortedResponse = sort_rows_correctOn2(Response)
+        errors_dict_WM = get_errors_WM(sortedResponse, errors_dict_WM, opened_meta_file)
+
+    # Save dict for other analysis
+    # with open(os.path.join(dict_directory, f'errors_dict_WM_{participant}_{current_month}.pkl'), 'wb') as f:
+    #     pickle.dump(errors_dict_WM, f)
+    # with open(os.path.join(dict_directory, f'errors_dict_WM_{participant}_{current_month}.json'), 'w', encoding='utf-8') as f:
+    #     json.dump(errors_dict_WM, f, ensure_ascii=False, indent=4, default=convert_numpy)
+    with open(os.path.join(dict_directory, f'errors_dict_WM_{participant}.pkl'), 'wb') as f:
+        pickle.dump(errors_dict_WM, f)
+    with open(os.path.join(dict_directory, f'errors_dict_WM_{participant}.json'), 'w', encoding='utf-8') as f:
+        json.dump(errors_dict_WM, f, ensure_ascii=False, indent=4, default=convert_numpy)
+    # Visualize results
+    top_four_categories = plot_errorDistribution_relative(errors_dict_WM,participantDirectory, participant, 'WM', 'rough', titleAdd = 'all', ax=axs[8])
+
+    ########################################################################################################################
+    # WM Anti --------------------------------------------------------------------------------------------------------------
+    errors_dict_WM_Anti = {name: [] for name in categorical_names_WM}
+    participantDirectory = os.path.join(directory, 'WM_Anti')
+    npy_files = glob.glob(os.path.join(participantDirectory, '*Response.npy'))
+    meta_files = glob.glob(os.path.join(participantDirectory, '*Meta.json'))
+    selected_npy_files = [file for file in npy_files if any(month in file for month in focusedMonths)]
+    selected_meta_files = [file for file in meta_files if any(month in file for month in focusedMonths)]
+
+    for npy_file, meta_file in zip(selected_npy_files, selected_meta_files):
+        # Load the JSON content from the file
+        with open(meta_file, 'r') as file:
+            opened_meta_file = json.load(file)
+        # Use the function
+        Response = np.load(npy_file, allow_pickle=True)
+        # Sort the correct stim on the 2nd row
+        sortedResponse = sort_rows_correctOn2(Response)
+        errors_dict_WM_Anti = get_errors_WM(sortedResponse, errors_dict_WM_Anti, opened_meta_file)
+
+    # Save dict for other analysis
+    # with open(os.path.join(dict_directory, f'errors_dict_WM_Anti_{participant}_{current_month}.pkl'), 'wb') as f:
+    #     pickle.dump(errors_dict_WM_Anti, f)
+    # with open(os.path.join(dict_directory, f'errors_dict_WM_Anti_{participant}_{current_month}.json'), 'w', encoding='utf-8') as f:
+    #     json.dump(errors_dict_WM_Anti, f, ensure_ascii=False, indent=4, default=convert_numpy)
+    with open(os.path.join(dict_directory, f'errors_dict_WM_Anti_{participant}.pkl'), 'wb') as f:
+        pickle.dump(errors_dict_WM_Anti, f)
+    with open(os.path.join(dict_directory, f'errors_dict_WM_Anti_{participant}.json'), 'w', encoding='utf-8') as f:
+        json.dump(errors_dict_WM_Anti, f, ensure_ascii=False, indent=4, default=convert_numpy)
+    # Visualize results
+    top_four_categories = plot_errorDistribution_relative(errors_dict_WM_Anti,participantDirectory, participant, 'WM_Anti', 'rough', titleAdd = 'all', ax=axs[9])
+
+    #######################################################################################################################
+    # WM Ctx1 --------------------------------------------------------------------------------------------------------------
+    errors_dict_WM_Ctx1 = {name: [] for name in categorical_names_WM_Ctx}
+    participantDirectory = os.path.join(directory, 'WM_Ctx1')
+    npy_files = glob.glob(os.path.join(participantDirectory, '*Response.npy'))
+    meta_files = glob.glob(os.path.join(participantDirectory, '*Meta.json'))
+    selected_npy_files = [file for file in npy_files if any(month in file for month in focusedMonths)]
+    selected_meta_files = [file for file in meta_files if any(month in file for month in focusedMonths)]
+
+    for npy_file, meta_file in zip(selected_npy_files, selected_meta_files):
+        # Load the JSON content from the file
+        with open(meta_file, 'r') as file:
+            opened_meta_file = json.load(file)
+        # Use the function
+        Response = np.load(npy_file, allow_pickle=True)
+        errors_dict_WM_Ctx1 = get_errors_WM_Ctx(Response, errors_dict_WM_Ctx1, opened_meta_file)
+
+    # Save dict for other analysis
+    # with open(os.path.join(dict_directory, f'errors_dict_WM_Ctx1_{participant}_{current_month}.pkl'), 'wb') as f:
+    #     pickle.dump(errors_dict_WM_Ctx1, f)
+    # with open(os.path.join(dict_directory, f'errors_dict_WM_Ctx1_{participant}_{current_month}.json'), 'w', encoding='utf-8') as f:
+    #     json.dump(errors_dict_WM_Ctx1, f, ensure_ascii=False, indent=4, default=convert_numpy)
+    with open(os.path.join(dict_directory, f'errors_dict_WM_Ctx1_{participant}.pkl'), 'wb') as f:
+        pickle.dump(errors_dict_WM_Ctx1, f)
+    with open(os.path.join(dict_directory, f'errors_dict_WM_Ctx1_{participant}.json'), 'w', encoding='utf-8') as f:
+        json.dump(errors_dict_WM_Ctx1, f, ensure_ascii=False, indent=4, default=convert_numpy)
+    # Visualize results
+    top_four_categories = plot_errorDistribution_relative(errors_dict_WM_Ctx1,participantDirectory, participant, 'WM_Ctx1', 'rough', titleAdd = 'all', ax=axs[10])
+
+    ########################################################################################################################
+    # WM Ctx2 --------------------------------------------------------------------------------------------------------------
+    errors_dict_WM_Ctx2 = {name: [] for name in categorical_names_WM_Ctx}
+    participantDirectory = os.path.join(directory, 'WM_Ctx2')
+    npy_files = glob.glob(os.path.join(participantDirectory, '*Response.npy'))
+    meta_files = glob.glob(os.path.join(participantDirectory, '*Meta.json'))
+    selected_npy_files = [file for file in npy_files if any(month in file for month in focusedMonths)]
+    selected_meta_files = [file for file in meta_files if any(month in file for month in focusedMonths)]
+
+    for npy_file, meta_file in zip(selected_npy_files, selected_meta_files):
+        # Load the JSON content from the file
+        with open(meta_file, 'r') as file:
+            opened_meta_file = json.load(file)
+        # Use the function
+        Response = np.load(npy_file, allow_pickle=True)
+        errors_dict_WM_Ctx2 = get_errors_WM_Ctx(Response, errors_dict_WM_Ctx2, opened_meta_file)
+
+    # Save dict for other analysis
+    # with open(os.path.join(dict_directory, f'errors_dict_WM_Ctx2_{participant}_{current_month}.pkl'), 'wb') as f:
+    #     pickle.dump(errors_dict_WM_Ctx2, f)
+    # with open(os.path.join(dict_directory, f'errors_dict_WM_Ctx2_{participant}_{current_month}.json'), 'w', encoding='utf-8') as f:
+    #     json.dump(errors_dict_WM_Ctx2, f, ensure_ascii=False, indent=4, default=convert_numpy)
+    with open(os.path.join(dict_directory, f'errors_dict_WM_Ctx2_{participant}.pkl'), 'wb') as f:
+        pickle.dump(errors_dict_WM_Ctx2, f)
+    with open(os.path.join(dict_directory, f'errors_dict_WM_Ctx2_{participant}.json'), 'w', encoding='utf-8') as f:
+        json.dump(errors_dict_WM_Ctx2, f, ensure_ascii=False, indent=4, default=convert_numpy)
+    # Visualize results
+    top_four_categories = plot_errorDistribution_relative(errors_dict_WM_Ctx2,participantDirectory, participant, 'WM_Ctx2', 'rough', titleAdd = 'all', ax=axs[11])
+
+    # Once all 12 are assigned, save the single master stacked image sheet
+    plt.tight_layout()
+    # master_save_path = os.path.join(directory.split('\\data')[0], 'ErrorGraphics_monthWise', f'all_12_tasks_{participant}_{current_month}.pdf')
+    master_save_path = os.path.join(directory.split('\\data')[0], 'ErrorGraphics', f'all_12_tasks_{participant}.pdf')
+    os.makedirs(os.path.dirname(master_save_path), exist_ok=True)
+    plt.savefig(master_save_path, dpi=100, bbox_inches='tight')
+    plt.close()
 
 
 if contingencyTables:

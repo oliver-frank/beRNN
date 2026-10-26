@@ -9,7 +9,7 @@ library(glmmTMB)
 # ==============================================================================
 # HELPER BLOCK - glmmTMB version
 # ==============================================================================
-out_dir     <- "W:\\group_csp\\analyses\\oliver.frank\\Data\\supplement_tables\\M4-3_errors"
+out_dir     <- "W:\\group_csp\\analyses\\oliver.frank\\Data\\supplement_tables\\M4_errors"
 RUN_POSTHOC <- FALSE                 # TRUE = additional Tukey contrasts over the time factor
 dir.create(out_dir, showWarnings = FALSE)
 
